@@ -9,7 +9,7 @@ independent and accepts `Iterable<Uint8Array>` or
 `IncrementalLineDecoder` uses streaming UTF-8 decoding, so a chunk may end in a
 multibyte character. LF and CRLF are accepted even when the two CRLF bytes arrive
 in different chunks. Each decoded record retains its exact `\n`, `\r\n`, or
-unterminated `""` source terminator for filtered-log export. `finish()` returns a
+unterminated `""` source terminator for exact source retention. `finish()` returns a
 final unterminated line. Invalid UTF-8 is a typed recoverable `INVALID_UTF8`
 failure with line context.
 

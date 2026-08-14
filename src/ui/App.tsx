@@ -571,8 +571,10 @@ function Summary({
       <section className="export-panel" aria-labelledby="export-title">
         <h3 id="export-title">Download your clean session</h3>
         <p>
-          JSON is the complete normalized session. The filtered log preserves
-          the original retained combat-log lines.
+          JSON is the complete normalized session. The encounter log wraps the
+          selected dummy attempt in the known-good Blackwing Lair zone/map,
+          Razorgore encounter, and character metadata from the reference capture
+          for WowCoach-compatible upload.
         </p>
         <div className="button-row">
           <button
@@ -587,10 +589,10 @@ function Summary({
             type="button"
             className="secondary-button"
             onClick={() => {
-              onExport("filtered-log");
+              onExport("encounter-log");
             }}
           >
-            Export filtered combat log
+            Export encounter combat log
           </button>
         </div>
         {state.exportFeedback === undefined ? null : (

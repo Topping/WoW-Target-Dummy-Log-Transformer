@@ -156,12 +156,16 @@
           "enum": [
             "cast",
             "damage",
+            "heal",
+            "miss",
+            "absorb",
             "aura",
             "resource",
             "summon",
             "death",
             "combatant-info",
             "encounter",
+            "metadata",
             "version",
             "generic"
           ]
@@ -202,12 +206,16 @@
           "enum": [
             "cast",
             "damage",
+            "heal",
+            "miss",
+            "absorb",
             "aura",
             "resource",
             "summon",
             "death",
             "combatant-info",
             "encounter",
+            "metadata",
             "version",
             "generic"
           ]

@@ -152,7 +152,7 @@ describe("analyzer UI state machine", () => {
     });
     state = analyzerReducer(state, {
       type: "EXPORT_FAILED",
-      kind: "filtered-log",
+      kind: "encounter-log",
       error,
     });
     expect(state).toMatchObject({

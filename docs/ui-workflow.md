@@ -80,6 +80,11 @@ removes that anchor, and revokes the URL in a `finally` block. Soft serializer
 warnings remain visible after the download. A hard serializer failure creates
 no download and is displayed as a recoverable alert.
 
+The encounter-log button produces the verified WowCoach-compatible form:
+Blackwing Lair zone/map context, a Razorgore wipe envelope, fixed reference
+`COMBATANT_INFO`, and transposed selected-target identity, hostile flags, and
+advanced map IDs. The fixed character template produces a visible warning.
+
 ## Verification boundary
 
 Pure reducer tests cover valid transitions, invalid/stale actions, cancellation,
@@ -104,7 +109,7 @@ screen-reader coverage remain gaps; see [`d10-hardening.md`](d10-hardening.md).
 
 D11 runs the same production suite from the exact repository-scoped path and
 adds a direct-load/reload assertion for the waiting state. The complete real
-five-target workflow now inspects the downloaded JSON and filtered-log content,
+five-target workflow now inspects the downloaded JSON and encounter-log content,
 the separately loaded worker URL, unchanged page URL, empty browser storage,
 cookies and service-worker registrations, and same-origin bodyless requests.
 After deployment, that direct-load and full workflow pair runs against the URL

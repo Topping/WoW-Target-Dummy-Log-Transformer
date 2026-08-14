@@ -1,6 +1,7 @@
-export type SessionExportKind = "json" | "filtered-log";
+export type SessionExportKind = "json" | "encounter-log";
 
-export type SessionExportWarningCode = "EXPORT_SOFT_BYTE_LIMIT_EXCEEDED";
+export type SessionExportWarningCode =
+  "EXPORT_SOFT_BYTE_LIMIT_EXCEEDED" | "WOWCOACH_COMPATIBILITY_TEMPLATE_USED";
 export type SessionExportFailureCode = "EXPORT_HARD_BYTE_LIMIT_EXCEEDED";
 
 export interface SessionExportSizeLimits {

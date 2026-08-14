@@ -1,5 +1,5 @@
 import {
-  serializeFilteredSessionLog,
+  serializeEncounterSessionLog,
   serializeSessionJson,
   sessionExportFilename,
   type OperationResult,
@@ -25,7 +25,7 @@ export function createSessionDownload(
   const serialized =
     kind === "json"
       ? serializeSessionJson(session, options)
-      : serializeFilteredSessionLog(session, options);
+      : serializeEncounterSessionLog(session, options);
   if (!serialized.ok) return serialized;
   return {
     ok: true,

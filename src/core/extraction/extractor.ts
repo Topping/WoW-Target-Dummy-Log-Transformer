@@ -1056,7 +1056,11 @@ export async function extractSessionChunks(
         incomingEventCount: existing.incomingEventCount + (incoming ? 1 : 0),
         damageEventCount:
           existing.damageEventCount +
-          (outgoing && event.family === "damage" ? 1 : 0),
+          (outgoing &&
+          event.family === "damage" &&
+          event.type !== "SWING_DAMAGE_LANDED"
+            ? 1
+            : 0),
         observedDamageAmount:
           existing.observedDamageAmount +
           (outgoing ? observedDamageAmount(record) : 0),

@@ -75,6 +75,8 @@ function fixtureLines(): readonly string[] {
     ),
     record(7, "SPELL_SUMMON", `${PLAYER},${GUARDIAN},4,"Guardian Spell",0x1`),
     record(8, "SPELL_CREATE", `${PLAYER},${SUMMON},5,"Create Spell",0x1`),
+    record(9, "ZONE_CHANGE", '0,"Example Zone",0'),
+    record(9, "MAP_CHANGE", '1,"Example Map",1,2,3,4'),
     damage(10, PLAYER, TARGET_A),
     damage(11, PLAYER, TARGET_B),
     damage(12, PET, TARGET_A),
@@ -128,6 +130,15 @@ async function extract(
 }
 
 describe("pass-two extraction, ownership, and filtering", () => {
+  it("drops recognized zone and map boundary metadata from sessions", async () => {
+    const session = await extract();
+    expect(
+      session.events.some(
+        (event) => event.type === "ZONE_CHANGE" || event.type === "MAP_CHANGE",
+      ),
+    ).toBe(false);
+  });
+
   it("keeps the selected player, complete target set, owned activity, incoming events, and external effects", async () => {
     const session = await extract({ includeDebugDecisions: true });
     expect(session.startTime.raw).toBe(time(10));

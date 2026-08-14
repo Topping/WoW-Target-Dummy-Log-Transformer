@@ -16,9 +16,9 @@ The chunks describe outcomes rather than branches or calendar milestones. They
 may be split into smaller pull requests when implementation reveals a useful
 boundary, but their acceptance criteria should not be diluted.
 
-Synthetic encounter work is deliberately outside the v0.2 release-critical
-path. Rotation analysis, SimulationCraft integration, a PWA, analytics, and
-server-side processing are not part of this plan.
+Rotation analysis, SimulationCraft integration, a PWA, analytics, and
+server-side processing are not part of this plan. Encounter-shaped text export
+was added after the initial v0.2 release in response to local validation.
 
 ## What the current captures tell us
 
@@ -377,18 +377,18 @@ tests, audit-accounting invariants, and an end-to-end noisy-capture golden test.
 
 **Dependencies:** D03-D05.
 
-## D07 — JSON and filtered raw-log exports
+## D07 — JSON and encounter-log exports
 
 **Implementation:** Complete on the current branch.
 
-**Outcome:** A processed session can be downloaded locally in both canonical and
-source-compatible forms.
+**Outcome:** A processed session can be downloaded locally in canonical JSON and
+WowCoach-compatible encounter-log forms.
 
 **Scope**
 
 - Versioned `session.json` serialization with parser/schema metadata.
-- `session.filtered.log` from retained original lines in original chronological
-  order.
+- `session.encounter.log` from filtered in-window source records plus generated
+  encounter and character metadata.
 - Browser `Blob` download generation and safe, deterministic filenames.
 - Export warnings and size protection where generation may be expensive.
 
@@ -396,8 +396,9 @@ source-compatible forms.
 
 - JSON validates against its documented schema and can be parsed back into a
   semantically equivalent session.
-- Filtered raw output does not rewrite retained source records and reparses
-  without new fatal errors.
+- Encounter output preserves retained combat records, reparses without new fatal
+  errors, and contains ordered zone, map, start, character, combat, and end
+  markers.
 - Export generation makes no network request and does not persist contents in
   local storage, IndexedDB, or cookies.
 
@@ -459,7 +460,7 @@ complete end-to-end workflow.
 - Session summary for character, target set, range, duration, relevant/removed
   event counts, controlled entities, external effects, unknown types, and
   warnings.
-- JSON and filtered-log export actions.
+- JSON and encounter-log export actions.
 - Progressive technical details/debug information without exposing GUIDs by
   default.
 - Reset/select-another-file and select-another-session paths.
@@ -548,30 +549,35 @@ process.
 
 **Dependencies:** D10.
 
-## D12 — Experimental encounter-envelope research
+## D12 — Encounter-shaped analyzer export
 
-**Outcome:** Current Retail encounter metadata is documented well enough to make
-an informed decision about a future synthetic export.
+**Outcome:** A selected dummy attempt can be downloaded in the manually
+validated WowCoach-compatible encounter form.
 
 **Scope**
 
 - Compare the two boss envelopes with dummy activity from the same 12.1.0
   profile, including ordering, field counts, `COMBATANT_INFO`, and nearby events.
-- Add a development-only comparison report/tool.
-- Document what can be preserved, what would have to be synthesized, and what
-  must not be fabricated.
-- If an experimental serializer follows, mark generated records internally as
-  synthetic and keep the feature behind Advanced/Experimental.
+- Preserve filtered in-window combat records between generated boundaries.
+- Emit the verified Blackwing Lair zone/map context, Razorgore encounter
+  identity, and fixed `COMBATANT_INFO` payload from
+  `data/boss-encounter.txt`.
+- Transpose selected dummy identity and flags plus advanced map IDs, and close
+  the attempt as a wipe without fake kill/death records.
+- Expose the encounter log as the primary text export.
 
 **Acceptance**
 
-- `docs/retail-log-format.md` answers the research questions in spec section 41
-  with evidence from the captures.
-- The research does not assign a real encounter ID to impersonate a boss kill
-  and does not claim Warcraft Logs compatibility.
-- No absent `COMBATANT_INFO` is fabricated.
+- The output parses as Retail log version 22 with ordered start, character,
+  combat, and end records.
+- The serializer uses encounter 610, difficulty 9, group size 40, and instance
+  469 from the known-good reference.
+- The output includes zone 469 and UI map 287 before `ENCOUNTER_START`.
+- Fixed reference character metadata use produces a visible warning.
+- A manual WowCoach upload accepts the complete generated form.
 
-**Verification:** Deterministic comparison snapshot and documentation review.
+**Verification:** Deterministic serializer tests, parser round-trip, real-capture
+browser download workflow, and documentation review.
 
 **Dependencies:** D02-D03. Not a dependency of D11.
 
@@ -584,12 +590,12 @@ an informed decision about a future synthetic export.
 | Current Retail parsing, Unicode, unknown-event tolerance | D02, D03 |
 | Character, target, and attempt discovery/splitting | D05 |
 | Detailed reparse, ownership, external effects, filtering | D06 |
-| Normalized JSON and filtered raw log | D07 |
+| Normalized JSON and encounter-shaped log | D07, D12 |
 | Non-technical end-to-end workflow and errors | D08, D09 |
 | Automated parser tests independent of UI | D00, D02, D03, D05-D07 |
 | Accessibility and supported-browser confidence | D08-D10 |
 | GitHub Pages production release | D11 |
-| Synthetic encounter investigation | D12, post-release/experimental |
+| Synthetic encounter export | D12, implemented after initial release |
 
 ## Decisions and evidence still needed
 

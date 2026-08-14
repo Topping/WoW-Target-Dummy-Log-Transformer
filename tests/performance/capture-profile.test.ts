@@ -7,7 +7,7 @@ import {
   discoverCombatLogChunks,
   extractSessionChunks,
   parseTimestamp,
-  serializeFilteredSessionLog,
+  serializeEncounterSessionLog,
   serializeSessionJson,
   type NonEmptyReadonlyArray,
   type SessionSelection,
@@ -36,7 +36,7 @@ interface ProfileMeasurement {
   readonly bytesRead: number;
   readonly stoppedAfterPostRoll?: boolean;
   readonly jsonExportBytes?: number;
-  readonly filteredLogExportBytes?: number;
+  readonly encounterLogExportBytes?: number;
   readonly timing: Timing;
 }
 
@@ -193,10 +193,10 @@ describe("D10 capture-wide performance and retention profile", () => {
         if (!measured.value.ok) continue;
         const session = measured.value.value;
         const json = serializeSessionJson(session);
-        const filtered = serializeFilteredSessionLog(session);
+        const encounter = serializeEncounterSessionLog(session);
         expect(json.ok).toBe(true);
-        expect(filtered.ok).toBe(true);
-        if (!json.ok || !filtered.ok) continue;
+        expect(encounter.ok).toBe(true);
+        if (!json.ok || !encounter.ok) continue;
 
         expect(session.statistics.filtering.stoppedAfterPostRoll).toBe(true);
         expect(session.statistics.filtering.bytesRead).toBeLessThan(
@@ -221,7 +221,7 @@ describe("D10 capture-wide performance and retention profile", () => {
           stoppedAfterPostRoll:
             session.statistics.filtering.stoppedAfterPostRoll,
           jsonExportBytes: json.value.byteLength,
-          filteredLogExportBytes: filtered.value.byteLength,
+          encounterLogExportBytes: encounter.value.byteLength,
           timing: measured.timing,
         });
       }

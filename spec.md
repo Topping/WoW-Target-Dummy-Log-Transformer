@@ -406,7 +406,7 @@ External buffs detected: 1
 Unknown event types: 0
 
 [Export JSON]
-[Export filtered combat log]
+[Export encounter combat log]
 ```
 
 Synthetic encounter export should initially live behind:
@@ -1276,7 +1276,7 @@ This format should later serve as the input to rotation analysis.
 Users should also be able to export:
 
 ```text
-session.filtered.log
+session.encounter.log
 ```
 
 This should preserve relevant original lines in original chronological order.
@@ -1305,30 +1305,32 @@ No exported file needs to pass through a backend.
 
 ---
 
-# 40. Synthetic encounter export
+# 40. WowCoach-compatible encounter export
 
-A future or experimental export may generate:
+The primary text export generates:
 
 ```text
 session.encounter.log
 ```
 
-containing explicit encounter-like boundaries.
+containing the verified compatibility envelope.
 
-This feature should initially be hidden behind:
+It wraps the selected dummy attempt in encounter-shaped metadata for downstream
+combat-log analyzers. Generated records use the verified Blackwing
+Lair/Razorgore template from `data/boss-encounter.txt`: zone 469, UI map 287,
+encounter 610, difficulty 9, and group size 40.
 
-```text
-Advanced
-→ Experimental encounter export
-```
-
-The application must clearly label generated records as synthetic internally.
+The export order is `COMBAT_LOG_VERSION`, `ZONE_CHANGE`, `MAP_CHANGE`,
+`ENCOUNTER_START`, `COMBATANT_INFO`, filtered combat, and
+`ENCOUNTER_END`. Selected dummy identity becomes Razorgore, neutral NPC flags
+become hostile, advanced event map IDs become 287, and the attempt ends as a
+wipe without synthetic kill/death events.
 
 ---
 
-# 41. Encounter-envelope research
+# 41. Compatibility validation
 
-Before implementing synthetic encounters, compare:
+The implementation was validated by comparing:
 
 ```text
 dummy log
@@ -1342,7 +1344,7 @@ genuine boss encounter
 
 recorded from the same current Retail client.
 
-Research questions:
+Validation questions included:
 
 - What exactly surrounds `ENCOUNTER_START`?
 - What fields are currently present?
@@ -1351,43 +1353,35 @@ Research questions:
 - What metadata appears before encounter end?
 - Which records exist only during genuine encounters?
 
-Document findings in:
+The verified behavior is documented in:
 
 ```text
-docs/retail-log-format.md
+docs/extraction-and-exports.md
 ```
 
 ---
 
-# 42. Synthetic encounter constraints
+# 42. Compatibility-template constraints
 
-Do not fabricate an existing boss kill.
+Manual upload validation on 2026-08-14 confirmed that the complete generated
+form is accepted by WowCoach. Removing only `ZONE_CHANGE` and `MAP_CHANGE`
+from the accepted genuine reference caused the unsupported-content result.
 
-In particular, the program should not intentionally assign an existing raid encounter ID merely to fool Warcraft Logs into accepting the session as that boss.
-
-The purpose of synthetic output is:
-
-> experiment with encounter-shaped logs
-
-not:
-
-> create fake public parses.
-
-Warcraft Logs compatibility is not required for the parser to be considered successful.
+The verified Razorgore template is the supported compatibility strategy until
+configurable encounter and character metadata exist. The export must visibly
+warn that it contains fixed reference character metadata and must not be
+represented as a genuine public boss parse.
 
 ---
 
 # 43. COMBATANT_INFO
 
-If `COMBATANT_INFO` exists naturally in the selected source data, retain it.
+Emit the exact `COMBATANT_INFO` payload from `data/boss-encounter.txt`,
+retimestamped to the selected session start. Emit a visible warning that the
+fixed reference character metadata was used.
 
-If it does not:
-
-```text
-do not fabricate it in v0.2
-```
-
-A future feature may allow metadata to be imported from a genuine encounter recorded with the same character and build.
+A future feature should construct character metadata from an explicit input
+such as a SimulationCraft profile rather than relying on the fixed reference.
 
 ---
 
@@ -2078,15 +2072,17 @@ Completion criteria:
 
 ---
 
-# 76. Phase 7 — synthetic encounter research
+# 76. Phase 7 — WowCoach-compatible encounter export
 
 Goal:
 
-> Determine whether a selected dummy session can be safely represented using encounter-like WoW log metadata.
+> Export a selected dummy session in the manually verified WowCoach-compatible
+> encounter form.
 
-This remains experimental.
-
-Warcraft Logs compatibility is not required for release.
+This phase is complete. The implementation emits the required zone/map context,
+Razorgore envelope, fixed character template, transposed target identity and
+flags, advanced map ID, and wipe result. General character metadata remains a
+future SimulationCraft-backed feature.
 
 ---
 

@@ -377,14 +377,30 @@ function normalizeKnownEvent(
     };
   }
 
-  const hasCommonActors = !["combatant-info", "encounter", "version"].includes(
-    definition.family,
-  );
+  const hasCommonActors = ![
+    "combatant-info",
+    "encounter",
+    "metadata",
+    "version",
+  ].includes(definition.family);
   const actors = hasCommonActors ? commonActors(values) : undefined;
   const hasSpell =
-    ["cast", "damage", "aura", "resource", "summon"].includes(
-      definition.family,
-    ) && record.eventType !== "SWING_DAMAGE";
+    [
+      "cast",
+      "damage",
+      "heal",
+      "miss",
+      "absorb",
+      "aura",
+      "resource",
+      "summon",
+    ].includes(definition.family) &&
+    record.eventType !== "SWING_DAMAGE" &&
+    record.eventType !== "SWING_DAMAGE_LANDED" &&
+    record.eventType !== "SWING_MISSED" &&
+    record.eventType !== "ENVIRONMENTAL_DAMAGE" &&
+    (record.eventType !== "SPELL_ABSORBED" ||
+      optionalNumber(values[8]) !== undefined);
   const spell = hasSpell ? spellReference(values, 8) : undefined;
   const combatantGuid =
     definition.family === "combatant-info" ? values[0] : undefined;
@@ -430,6 +446,9 @@ function definitions(
   );
 }
 
+// On-disk event catalog and field-layout reference:
+// https://wowcoach.gg/docs/combat-log (format 22), verified against this
+// repository's Retail 12.1.0 captures before events are registered here.
 const RETAIL_12_1_0_DEFINITIONS = definitions([
   ["COMBAT_LOG_VERSION", "version", 7, 7],
   ["SPELL_CAST_START", "cast", 11, 11],
@@ -438,7 +457,15 @@ const RETAIL_12_1_0_DEFINITIONS = definitions([
   ["SPELL_DAMAGE", "damage", 11, 11],
   ["SPELL_PERIODIC_DAMAGE", "damage", 11, 11],
   ["SWING_DAMAGE", "damage", 8, 8],
+  ["SWING_DAMAGE_LANDED", "damage", 8, 8],
+  ["SWING_MISSED", "miss", 8, 8],
   ["RANGE_DAMAGE", "damage", 11, 11],
+  ["ENVIRONMENTAL_DAMAGE", "damage", 8, 8],
+  ["SPELL_MISSED", "miss", 11, 11],
+  ["SPELL_ABSORBED", "absorb", 8, 8],
+  ["SPELL_HEAL", "heal", 11, 11],
+  ["SPELL_PERIODIC_HEAL", "heal", 11, 11],
+  ["SPELL_HEAL_ABSORBED", "absorb", 11, 11],
   ["SPELL_AURA_APPLIED", "aura", 12, 12],
   ["SPELL_AURA_REFRESH", "aura", 12, 12],
   ["SPELL_AURA_REMOVED", "aura", 12, 12],
@@ -447,13 +474,18 @@ const RETAIL_12_1_0_DEFINITIONS = definitions([
   ["SPELL_ENERGIZE", "resource", 11, 11],
   ["SPELL_PERIODIC_ENERGIZE", "resource", 11, 11],
   ["SPELL_DRAIN", "resource", 11, 11],
+  ["SPELL_EMPOWER_START", "cast", 11, 11],
+  ["SPELL_EMPOWER_END", "cast", 11, 11],
   ["SPELL_SUMMON", "summon", 11, 11],
   ["SPELL_CREATE", "summon", 11, 11],
   ["UNIT_DIED", "death", 8, 8],
   ["UNIT_DESTROYED", "death", 8, 8],
+  ["PARTY_KILL", "death", 8, 8],
   ["COMBATANT_INFO", "combatant-info", 1, 1],
   ["ENCOUNTER_START", "encounter", 5, 5],
   ["ENCOUNTER_END", "encounter", 6, 6],
+  ["ZONE_CHANGE", "metadata", 3, 3],
+  ["MAP_CHANGE", "metadata", 6, 6],
 ]);
 
 export const retail12_1_0Schema: CombatLogSchema = {

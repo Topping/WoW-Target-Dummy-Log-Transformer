@@ -7,12 +7,18 @@ The current D00-D11 implementation provides the characterized fixture set, share
 TypeScript contracts, incremental UTF-8/line/CSV parser primitives, a registered
 Retail 12.1.0 combat-log schema, canonical events and actors, the typed worker
 boundary and lifecycle, bounded player/target/session discovery, detailed
-streaming extraction and ownership-aware filtering, versioned JSON and lossless
-filtered-log exports, and the complete accessible React file-to-export workflow.
+streaming extraction and ownership-aware filtering, versioned JSON and
+WowCoach-compatible encounter-log exports, and the complete accessible React
+file-to-export workflow.
 The UI supports content-based picker/drop intake, recorder confirmation or full
 character selection, per-character session grouping, cancellable two-pass
 processing, multi-target summaries, warnings/debug disclosure, and local JSON
-and filtered-log downloads.
+and encounter-log downloads.
+
+The encounter-log export uses the manually verified WowCoach-compatible
+Blackwing Lair/Razorgore envelope, transposes the selected dummy combat stream,
+and reports the attempt as a wipe. Until character metadata import is added, it
+visibly discloses that the fixed reference `COMBATANT_INFO` template is used.
 D10 adds measured retained-data/export safety limits, production worker and
 privacy audits, explicit capture-wide performance regressions, installed-Chrome
 and Playwright engine-proxy workflows, axe accessibility automation, and a

@@ -2,7 +2,7 @@
 
 This document records the concrete D06-D07 behavior. The public core entry
 points are `extractSessionChunks`, `serializeSessionJson`,
-`parseSessionJson`, and `serializeFilteredSessionLog`. They import no DOM,
+`parseSessionJson`, and `serializeEncounterSessionLog`. They import no DOM,
 React, File, Blob, storage, or network API.
 
 ## Incremental selected-window extraction
@@ -128,13 +128,39 @@ warning and 256 MiB hard recoverable failure. Passing an explicit `sizeLimits`
 object replaces those defaults. Soft crossings return the complete export with
 a warning; hard crossings return no content.
 
-## Filtered raw log and browser downloads
+## Encounter-shaped log and browser downloads
 
-The incremental decoder records `\n`, `\r\n`, or an unterminated final line for
-every source record. `serializeFilteredSessionLog` concatenates each retained
-event's unchanged `raw` text and exact terminator in source line order. It does
-not normalize CSV, timestamps, quoting, Unicode, Advanced fields, or line
-endings. The retained version record makes the result independently parseable.
+`serializeEncounterSessionLog` produces an independently parseable combat log
+for the selected visible attempt. It retains the source `COMBAT_LOG_VERSION`,
+inserts the known-good Razorgore envelope from `data/boss-encounter.txt`
+(encounter 610, difficulty 9, group size 40, instance 469), places the exact
+reference `COMBATANT_INFO` payload immediately after `ENCOUNTER_START`,
+transposes each selected dummy GUID and quoted name to the reference Razorgore
+GUID and name in the filtered in-window combat records, and closes the envelope
+with the selected duration.
+
+The verified compatibility envelope is emitted in this order:
+
+1. retained `COMBAT_LOG_VERSION`;
+2. Blackwing Lair `ZONE_CHANGE` and `MAP_CHANGE`;
+3. Razorgore `ENCOUNTER_START`;
+4. the fixed reference `COMBATANT_INFO`;
+5. filtered combat records;
+6. Razorgore `ENCOUNTER_END` with wipe result `0`.
+
+Selected dummy identities become Razorgore, neutral target flags `0xa28` and
+`0x10a28` become hostile `0xa48` and `0x10a48`, and advanced event map ID
+`2393` becomes Blackwing Lair UI map ID `287`. No fake kill or death event is
+added.
+
+Manual upload validation on 2026-08-14 confirmed that this complete output is
+accepted by WowCoach. An A/B check also confirmed that deleting only
+`ZONE_CHANGE` and `MAP_CHANGE` from the accepted reference file produces
+WowCoach's unsupported-content result.
+
+The compatibility export still warns that it uses fixed character metadata.
+A future character-metadata input, such as a SimulationCraft profile, should
+replace the fixed `COMBATANT_INFO` payload.
 
 `createSessionDownload` is the browser boundary that creates a Blob and assigns
 a filename. Names use a lowercase ASCII-safe player component and compact start
@@ -142,7 +168,7 @@ timestamp, for example:
 
 ```text
 p-lsefatter-argentdawn-eu-20260814-114738.session.json
-p-lsefatter-argentdawn-eu-20260814-114738.session.filtered.log
+p-lsefatter-argentdawn-eu-20260814-114738.session.encounter.log
 ```
 
 The exporters make no network request and use no localStorage, IndexedDB,

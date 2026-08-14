@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import Ajv from "ajv";
 import { describe, expect, it } from "vitest";
 
@@ -6,9 +8,10 @@ import {
   DEFAULT_SESSION_EXPORT_SIZE_LIMITS,
   extractSessionText,
   parseCombatLogChunks,
+  parseCombatLogText,
   parseSessionJson,
   parseTimestamp,
-  serializeFilteredSessionLog,
+  serializeEncounterSessionLog,
   serializeSessionJson,
   sessionExportFilename,
   type Session,
@@ -20,10 +23,23 @@ const HEADER =
   "8/14/2026 13:30:00.0000  COMBAT_LOG_VERSION,22,ADVANCED_LOG_ENABLED,1,BUILD_VERSION,12.1.0,PROJECT_ID,1";
 const DAMAGE =
   '8/14/2026 13:30:01.0001  SPELL_DAMAGE,Player-1,"Pølsefatter-ExampleRealm",0x511,0x0,Creature-1,"Target",0xa28,0x0,1,"Strike",0x1,100';
+const TRANSPOSED_DAMAGE =
+  '8/14/2026 13:30:01.0001  SPELL_DAMAGE,Player-1,"Pølsefatter-ExampleRealm",0x511,0x0,Creature-0-1465-469-4188-12435-00007EE8CE,"Razorgore the Untamed",0xa48,0x0,1,"Strike",0x1,100';
+const ADVANCED_DAMAGE =
+  '8/14/2026 13:30:01.0001  SPELL_DAMAGE,Player-1,"Pølsefatter-ExampleRealm",0x511,0x0,Creature-1,"Target",0x10a28,0x0,1,"Strike",0x1,Creature-1,0000000000000000,100,100,0,0,0,0,0,0,0,0,0,0,1.0,2.0,2393,0.0,90,100,100,-1,1,0,0,0,nil,nil,nil,ST';
 const NOISE =
   '8/14/2026 13:30:01.5000  SPELL_DAMAGE,Player-2,"Nearby",0x518,0x0,Creature-2,"Other",0xa28,0x0,2,"Noise",0x1,50';
 const EXTERNAL =
   '8/14/2026 13:30:02.0000  SPELL_AURA_APPLIED,Player-2,"Nearby",0x518,0x0,Player-1,"Pølsefatter-ExampleRealm",0x511,0x0,3,"External",0x1,BUFF';
+const NATURAL_COMBATANT_INFO =
+  "8/14/2026 13:29:59.0000  COMBATANT_INFO,Player-1,1,1944,513,30352,334,0,0,0,0,1186,1186,1186,98,52,276,276,276,0,1175,34,34,34,1956,251,[(76033,96161,2)],(0),[],[],10,0,0,0";
+const REFERENCE_COMBATANT_INFO = readFileSync(
+  new URL("../data/boss-encounter.txt", import.meta.url),
+  "utf8",
+)
+  .split(/\r?\n/u)
+  .find((line) => line.includes("  COMBATANT_INFO,"))
+  ?.split("  ")[1];
 const SOURCE = `${HEADER}\r\n${DAMAGE}\n${NOISE}\r\n${EXTERNAL}`;
 
 function selection(): SessionSelection {
@@ -102,19 +118,111 @@ describe("versioned session JSON", () => {
   });
 });
 
-describe("filtered raw log and browser download transport", () => {
-  it("preserves retained source lines and their original line endings byte-for-byte", async () => {
+describe("WowCoach-compatible encounter log and browser download transport", () => {
+  it("wraps selected records in the verified ordered compatibility envelope", async () => {
     const value = await session();
-    const exported = serializeFilteredSessionLog(value);
+    const exported = serializeEncounterSessionLog(value);
     if (!exported.ok) throw new Error(exported.error.message);
-    expect(exported.value.content).toBe(`${HEADER}\r\n${DAMAGE}\n${EXTERNAL}`);
-    expect(new TextEncoder().encode(exported.value.content)).toEqual(
-      new TextEncoder().encode(`${HEADER}\r\n${DAMAGE}\n${EXTERNAL}`),
+    const lines = exported.value.content.trimEnd().split("\n");
+    expect(lines).toHaveLength(8);
+    expect(lines[0]).toBe(HEADER);
+    expect(lines[1]).toBe(
+      '8/14/2026 13:30:00.0000  ZONE_CHANGE,469,"Blackwing Lair",9',
     );
+    expect(lines[2]).toBe(
+      '8/14/2026 13:30:00.0000  MAP_CHANGE,287,"Blackwing Lair",-7394.120117,-7727.069824,-844.622009,-1344.050049',
+    );
+    expect(lines[3]).toBe(
+      '8/14/2026 13:30:01.0001  ENCOUNTER_START,610,"Razorgore the Untamed",9,40,469',
+    );
+    expect(REFERENCE_COMBATANT_INFO).toBeDefined();
+    expect(lines[4]?.split("  ")[1]).toBe(REFERENCE_COMBATANT_INFO);
+    expect(lines.slice(5, 7)).toEqual([TRANSPOSED_DAMAGE, EXTERNAL]);
+    expect(lines[7]).toBe(
+      '8/14/2026 13:30:02.0000  ENCOUNTER_END,610,"Razorgore the Untamed",9,40,0,1000',
+    );
+    expect(exported.value.content).not.toContain(NOISE);
+    expect(exported.warnings).toMatchObject([
+      { code: "WOWCOACH_COMPATIBILITY_TEMPLATE_USED" },
+    ]);
     const reparsed = await parseCombatLogChunks([
       new TextEncoder().encode(exported.value.content),
     ]);
     expect(reparsed.ok).toBe(true);
+    if (!reparsed.ok) return;
+    expect(reparsed.value.records.map((event) => event.type)).toEqual([
+      "COMBAT_LOG_VERSION",
+      "ZONE_CHANGE",
+      "MAP_CHANGE",
+      "ENCOUNTER_START",
+      "COMBATANT_INFO",
+      "SPELL_DAMAGE",
+      "SPELL_AURA_APPLIED",
+      "ENCOUNTER_END",
+    ]);
+    expect(reparsed.warnings).toEqual([]);
+  });
+
+  it("rewrites advanced map IDs and exports the attempt as a wipe", async () => {
+    const value = await session();
+    const parsed = await parseCombatLogText(`${HEADER}\n${ADVANCED_DAMAGE}`);
+    if (!parsed.ok) throw new Error(parsed.error.message);
+    const advancedDamage = parsed.value.records.find(
+      (event) => event.type === "SPELL_DAMAGE",
+    );
+    if (advancedDamage === undefined) {
+      throw new Error("missing advanced damage fixture");
+    }
+    const exported = serializeEncounterSessionLog({
+      ...value,
+      events: value.events.map((event) =>
+        event.raw === DAMAGE ? advancedDamage : event,
+      ),
+    });
+    if (!exported.ok) throw new Error(exported.error.message);
+    const damageLine = exported.value.content
+      .split("\n")
+      .find((line) => line.includes("  SPELL_DAMAGE,"));
+    expect(damageLine).toBeDefined();
+    expect(
+      damageLine?.match(/Creature-0-1465-469-4188-12435-00007EE8CE/gu),
+    ).toHaveLength(2);
+    expect(damageLine?.match(/"Razorgore the Untamed"/gu)).toHaveLength(1);
+    expect(damageLine).not.toContain("Creature-1");
+    expect(damageLine).not.toContain('"Target"');
+    expect(damageLine).toContain(",0x10a48,0x0,");
+    expect(damageLine).not.toContain('"Razorgore the Untamed",0x10a28,');
+    expect(damageLine).toContain(",1.0,2.0,287,0.0,90,");
+    expect(damageLine).not.toContain(",2393,");
+    expect(exported.value.content).toContain(
+      'ENCOUNTER_END,610,"Razorgore the Untamed",9,40,0,1000',
+    );
+  });
+
+  it("uses the verified compatibility character template consistently", async () => {
+    const value = await session();
+    const parsed = await parseCombatLogText(
+      `${HEADER}\n${NATURAL_COMBATANT_INFO}`,
+    );
+    if (!parsed.ok) throw new Error(parsed.error.message);
+    const combatant = parsed.value.records.find(
+      (event) => event.type === "COMBATANT_INFO",
+    );
+    if (combatant === undefined) throw new Error("missing combatant fixture");
+    const exported = serializeEncounterSessionLog({
+      ...value,
+      events: [...value.events, combatant],
+    });
+    if (!exported.ok) throw new Error(exported.error.message);
+    expect(exported.warnings).toMatchObject([
+      { code: "WOWCOACH_COMPATIBILITY_TEMPLATE_USED" },
+    ]);
+    expect(exported.value.content).not.toContain(
+      "COMBATANT_INFO,Player-1,1,1944",
+    );
+    expect(exported.value.content).toContain(
+      "COMBATANT_INFO,Player-3702-0A70D8DF,1,1944",
+    );
   });
 
   it("generates deterministic safe filenames and confines Blob creation to browser transport", async () => {
@@ -122,8 +230,8 @@ describe("filtered raw log and browser download transport", () => {
     expect(sessionExportFilename(value, "json")).toBe(
       "p-lsefatter-examplerealm-20260814-133001.session.json",
     );
-    expect(sessionExportFilename(value, "filtered-log")).toBe(
-      "p-lsefatter-examplerealm-20260814-133001.session.filtered.log",
+    expect(sessionExportFilename(value, "encounter-log")).toBe(
+      "p-lsefatter-examplerealm-20260814-133001.session.encounter.log",
     );
     const first = createSessionDownload(value, "json");
     const second = createSessionDownload(value, "json");
@@ -148,7 +256,7 @@ describe("filtered raw log and browser download transport", () => {
       expect(soft.value.content).toBe(baseline.value.content);
     }
     expect(
-      serializeFilteredSessionLog(value, {
+      serializeEncounterSessionLog(value, {
         sizeLimits: { hardByteLimit: 1 },
       }),
     ).toMatchObject({

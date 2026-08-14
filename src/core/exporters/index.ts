@@ -3,7 +3,7 @@ export {
   SESSION_JSON_FORMAT,
   SESSION_JSON_VERSION,
   parseSessionJson,
-  serializeFilteredSessionLog,
+  serializeEncounterSessionLog,
   serializeSessionJson,
   sessionExportFilename,
 } from "./sessionExports";

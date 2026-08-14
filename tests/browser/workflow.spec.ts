@@ -84,14 +84,36 @@ test("real five-target file-to-both-exports workflow is accessible and local-onl
 
   const logDownloadPromise = page.waitForEvent("download");
   await page
-    .getByRole("button", { name: "Export filtered combat log" })
+    .getByRole("button", { name: "Export encounter combat log" })
     .click();
   const logDownload = await logDownloadPromise;
-  expect(logDownload.suggestedFilename()).toMatch(/\.session\.filtered\.log$/u);
+  expect(logDownload.suggestedFilename()).toMatch(
+    /\.session\.encounter\.log$/u,
+  );
   const logDownloadPath = await logDownload.path();
+  const downloadedLog = await readFile(logDownloadPath, "utf8");
   await expect
-    .poll(async () => readFile(logDownloadPath, "utf8"))
-    .toMatch(/COMBAT_LOG_VERSION,22/u);
+    .poll(() => downloadedLog)
+    .toMatch(/ENCOUNTER_START,610,"Razorgore the Untamed",9,40,469/u);
+  expect(downloadedLog).toContain('ZONE_CHANGE,469,"Blackwing Lair",9');
+  expect(downloadedLog).toContain(
+    'MAP_CHANGE,287,"Blackwing Lair",-7394.120117,-7727.069824,-844.622009,-1344.050049',
+  );
+  expect(downloadedLog).toContain("Creature-0-1465-469-4188-12435-00007EE8CE");
+  expect(downloadedLog).not.toContain("Cleave Training Dummy");
+  expect(downloadedLog).not.toContain("-243208-");
+  expect(downloadedLog).toContain(
+    'Creature-0-1465-469-4188-12435-00007EE8CE,"Razorgore the Untamed",0x10a48,',
+  );
+  expect(downloadedLog).not.toContain('"Razorgore the Untamed",0x10a28,');
+  expect(downloadedLog).toContain(",287,");
+  expect(downloadedLog).not.toContain(",2393,");
+  expect(downloadedLog).toMatch(
+    /ENCOUNTER_END,610,"Razorgore the Untamed",9,40,0,/u,
+  );
+  await expect(page.locator(".export-feedback[role='status']")).toContainText(
+    "verified Blackwing Lair/Razorgore template",
+  );
 
   expect(requestsAfterIntake.length).toBeGreaterThan(0);
   expect(requestsAfterIntake.every((request) => request.method === "GET")).toBe(

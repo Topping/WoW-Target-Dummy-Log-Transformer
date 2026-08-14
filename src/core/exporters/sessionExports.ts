@@ -9,6 +9,12 @@ import type {
   SessionExportSizeLimits,
 } from "../contracts";
 import { parserWarning } from "../parser/diagnostics";
+import {
+  WOWCOACH_REFERENCE_BOSS_GUID,
+  WOWCOACH_REFERENCE_COMBATANT_GUID,
+  WOWCOACH_REFERENCE_COMBATANT_INFO,
+  WOWCOACH_REFERENCE_ENCOUNTER,
+} from "./wowCoachReference";
 
 export const SESSION_JSON_FORMAT = "wow-training-dummy-session";
 export const SESSION_JSON_VERSION = 1;
@@ -145,20 +151,166 @@ export function serializeSessionJson(
   );
 }
 
-export function serializeFilteredSessionLog(
+function csvString(value: string): string {
+  return `"${value.replaceAll('"', '""')}"`;
+}
+
+function syntheticLine(
+  timestamp: string,
+  eventType: string,
+  fields: readonly string[],
+): string {
+  return `${timestamp}  ${eventType},${fields.join(",")}`;
+}
+
+function transposeTargetIdentity(raw: string, session: Session): string {
+  return session.targets.reduce((transposed, target) => {
+    const withGuid = transposed.replaceAll(
+      target.guid,
+      WOWCOACH_REFERENCE_BOSS_GUID,
+    );
+    return target.name === undefined
+      ? withGuid
+      : withGuid.replaceAll(
+          csvString(target.name),
+          csvString(WOWCOACH_REFERENCE_ENCOUNTER.name),
+        );
+  }, raw);
+}
+
+function transposeNeutralBossFlags(raw: string): string {
+  const identity = `${WOWCOACH_REFERENCE_BOSS_GUID},${csvString(
+    WOWCOACH_REFERENCE_ENCOUNTER.name,
+  )},`;
+  return raw
+    .replaceAll(`${identity}0xa28,`, `${identity}0xa48,`)
+    .replaceAll(`${identity}0x10a28,`, `${identity}0x10a48,`);
+}
+
+const SPELL_ADVANCED_MAP_EVENT_TYPES = new Set([
+  "SPELL_CAST_SUCCESS",
+  "SPELL_DAMAGE",
+  "SPELL_PERIODIC_DAMAGE",
+  "RANGE_DAMAGE",
+  "SPELL_HEAL",
+  "SPELL_PERIODIC_HEAL",
+  "SPELL_ENERGIZE",
+  "SPELL_PERIODIC_ENERGIZE",
+  "SPELL_DRAIN",
+]);
+
+const NON_SPELL_ADVANCED_MAP_EVENT_TYPES = new Set([
+  "SWING_DAMAGE",
+  "SWING_DAMAGE_LANDED",
+  "ENVIRONMENTAL_DAMAGE",
+]);
+
+function rewriteAdvancedMapId(event: Session["events"][number]): string {
+  const fieldIndex = SPELL_ADVANCED_MAP_EVENT_TYPES.has(event.type)
+    ? 28
+    : NON_SPELL_ADVANCED_MAP_EVENT_TYPES.has(event.type)
+      ? 25
+      : undefined;
+  if (
+    fieldIndex === undefined ||
+    event.rawFields[fieldIndex]?.value !== "2393"
+  ) {
+    return event.raw;
+  }
+  const separator = event.raw.indexOf("  ");
+  if (separator < 0) return event.raw;
+  const fields = event.rawFields.map((field, index) =>
+    index === fieldIndex ? WOWCOACH_REFERENCE_ENCOUNTER.uiMapId : field.raw,
+  );
+  return `${event.raw.slice(0, separator + 2)}${fields.join(",")}`;
+}
+
+const ENVELOPE_EVENT_TYPES = new Set([
+  "COMBAT_LOG_VERSION",
+  "COMBATANT_INFO",
+  "ENCOUNTER_START",
+  "ENCOUNTER_END",
+  "ZONE_CHANGE",
+  "MAP_CHANGE",
+]);
+
+export function serializeEncounterSessionLog(
   session: Session,
   options: SessionExportOptions = {},
 ): OperationResult<SerializedSessionExport> {
   const resolvedOptions = resolveExportOptions(options);
-  const content = session.events
-    .map((event) => event.raw + event.lineTerminator)
-    .join("");
-  return finishExport(
-    content,
+  const version = session.events.find(
+    (event) => event.type === "COMBAT_LOG_VERSION",
+  );
+  const metadataTimestamp = version?.timestamp.raw ?? session.startTime.raw;
+  const durationMs = ((session.durationTicks + 5n) / 10n).toString(10);
+  // WowCoach rejects this compatibility form when either context record is
+  // omitted, even when the encounter and character payloads are unchanged.
+  const lines = [
+    ...(version === undefined ? [] : [version.raw]),
+    syntheticLine(metadataTimestamp, "ZONE_CHANGE", [
+      WOWCOACH_REFERENCE_ENCOUNTER.instanceId,
+      csvString(WOWCOACH_REFERENCE_ENCOUNTER.zoneName),
+      WOWCOACH_REFERENCE_ENCOUNTER.difficultyId,
+    ]),
+    syntheticLine(metadataTimestamp, "MAP_CHANGE", [
+      WOWCOACH_REFERENCE_ENCOUNTER.uiMapId,
+      csvString(WOWCOACH_REFERENCE_ENCOUNTER.zoneName),
+      ...WOWCOACH_REFERENCE_ENCOUNTER.mapBounds,
+    ]),
+    syntheticLine(session.startTime.raw, "ENCOUNTER_START", [
+      WOWCOACH_REFERENCE_ENCOUNTER.id,
+      csvString(WOWCOACH_REFERENCE_ENCOUNTER.name),
+      WOWCOACH_REFERENCE_ENCOUNTER.difficultyId,
+      WOWCOACH_REFERENCE_ENCOUNTER.groupSize,
+      WOWCOACH_REFERENCE_ENCOUNTER.instanceId,
+    ]),
+    `${session.startTime.raw}  ${WOWCOACH_REFERENCE_COMBATANT_INFO}`,
+    ...session.events
+      .filter(
+        (event) =>
+          !ENVELOPE_EVENT_TYPES.has(event.type) &&
+          event.timestamp.localTimeTicks >= session.startTime.localTimeTicks &&
+          event.timestamp.localTimeTicks <= session.endTime.localTimeTicks,
+      )
+      .map((event) =>
+        transposeNeutralBossFlags(
+          transposeTargetIdentity(rewriteAdvancedMapId(event), session),
+        ),
+      ),
+    syntheticLine(session.endTime.raw, "ENCOUNTER_END", [
+      WOWCOACH_REFERENCE_ENCOUNTER.id,
+      csvString(WOWCOACH_REFERENCE_ENCOUNTER.name),
+      WOWCOACH_REFERENCE_ENCOUNTER.difficultyId,
+      WOWCOACH_REFERENCE_ENCOUNTER.groupSize,
+      "0",
+      durationMs,
+    ]),
+  ];
+  const exported = finishExport(
+    `${lines.join("\n")}\n`,
     "text/plain;charset=utf-8",
-    "filtered-log",
+    "encounter-log",
     resolvedOptions,
   );
+  if (!exported.ok) return exported;
+  return {
+    ...exported,
+    warnings: [
+      parserWarning(
+        "WOWCOACH_COMPATIBILITY_TEMPLATE_USED",
+        "This WowCoach-compatible export uses the verified Blackwing Lair/Razorgore template and fixed COMBATANT_INFO from data/boss-encounter.txt. Selected dummy identity, neutral NPC flags, and advanced map IDs are transposed, and the encounter ends as a wipe.",
+        {
+          details: {
+            selectedPlayerGuid: session.player.guid,
+            referencePlayerGuid: WOWCOACH_REFERENCE_COMBATANT_GUID,
+            referenceEncounterId: Number(WOWCOACH_REFERENCE_ENCOUNTER.id),
+          },
+        },
+      ),
+      ...exported.warnings,
+    ],
+  };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -362,5 +514,5 @@ export function sessionExportFilename(
   const time = compactTimestamp(session.startTime.raw);
   return kind === "json"
     ? `${actor}-${time}.session.json`
-    : `${actor}-${time}.session.filtered.log`;
+    : `${actor}-${time}.session.encounter.log`;
 }

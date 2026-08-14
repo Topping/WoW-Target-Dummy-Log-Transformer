@@ -16,12 +16,16 @@ export interface SpellReference {
 export type EventFamily =
   | "cast"
   | "damage"
+  | "heal"
+  | "miss"
+  | "absorb"
   | "aura"
   | "resource"
   | "summon"
   | "death"
   | "combatant-info"
   | "encounter"
+  | "metadata"
   | "version"
   | "generic";
 

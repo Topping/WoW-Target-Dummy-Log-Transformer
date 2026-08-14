@@ -180,14 +180,14 @@ describe("browser-oriented D08-D09 workflow", () => {
     const download = vi.fn(
       (
         _session: Session,
-        kind: "json" | "filtered-log",
+        kind: "json" | "encounter-log",
       ): OperationResult<SavedSessionDownload> =>
         success(
           {
             filename:
               kind === "json"
                 ? "character.session.json"
-                : "character.session.filtered.log",
+                : "character.session.encounter.log",
           },
           kind === "json"
             ? [
@@ -259,11 +259,11 @@ describe("browser-oriented D08-D09 workflow", () => {
       await screen.findByText("The export is large but complete."),
     ).toBeTruthy();
     await user.click(
-      screen.getByRole("button", { name: "Export filtered combat log" }),
+      screen.getByRole("button", { name: "Export encounter combat log" }),
     );
     expect(download).toHaveBeenCalledTimes(2);
     expect(
-      await screen.findByText(/character\.session\.filtered\.log is ready/u),
+      await screen.findByText(/character\.session\.encounter\.log is ready/u),
     ).toBeTruthy();
   });
 
