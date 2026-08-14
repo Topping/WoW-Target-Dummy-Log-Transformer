@@ -408,6 +408,8 @@ browser download integration tests.
 
 ## D08 — File intake, discovery, and selection UI
 
+**Implementation:** Complete on the current branch.
+
 **Outcome:** A non-technical player can go from opening the page to choosing a
 detected attempt.
 
@@ -445,6 +447,8 @@ tests through session selection.
 **Dependencies:** D01, D04, D05.
 
 ## D09 — Processing, summary, and export UI
+
+**Implementation:** Complete on the current branch.
 
 **Outcome:** The selected attempt can be processed, reviewed, and exported in a
 complete end-to-end workflow.

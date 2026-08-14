@@ -1,6 +1,9 @@
 export type * from "./workerProtocol";
-export { createSessionDownload } from "./browserExports";
-export type { BrowserSessionDownload } from "./browserExports";
+export { createSessionDownload, saveSessionDownload } from "./browserExports";
+export type {
+  BrowserSessionDownload,
+  SavedSessionDownload,
+} from "./browserExports";
 export { validateCombatLogBlob } from "./blobTransport";
 export { ParserWorkerClient, createParserWorkerClient } from "./workerClient";
 export { ParserWorkerRuntime } from "./workerRuntime";

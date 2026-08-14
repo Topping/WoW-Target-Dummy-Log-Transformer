@@ -140,3 +140,10 @@ p-lsefatter-argentdawn-eu-20260814-114738.session.filtered.log
 
 The exporters make no network request and use no localStorage, IndexedDB,
 cookies, service worker, analytics, or backend.
+
+D09 adds `saveSessionDownload` as the final browser/DOM handoff. It calls
+`createSessionDownload`, assigns its Blob to a temporary object URL and hidden
+anchor, triggers the deterministic download, then removes the anchor and revokes
+the URL in `finally`. A hard serialization limit creates neither an object URL
+nor a download. Soft warnings are returned alongside the completed download for
+the UI to display.

@@ -9,7 +9,9 @@
 The application shell uses React 19 with Vite. React is limited to presentation
 and application state in `src/ui`. Domain contracts live in `src/core` and use
 no React or DOM APIs. Browser transport contracts live in `src/worker`; this is
-the only boundary currently allowed to mention browser `File` objects.
+the only processing boundary allowed to read browser `File` objects. The UI may
+retain and pass an opaque `File` handle while coordinating the two worker passes,
+but it never reads or parses that file.
 
 The dependency direction is:
 
@@ -118,12 +120,13 @@ browser worker.
 **Date:** 2026-08-14
 
 Core extraction accepts byte iterables, plain file metadata, a selected visible
-window, and plain options. The browser worker alone owns `File`, Blob streaming,
-and operation publication. Extraction retains the log-version record required
-for a standalone filtered log, cheaply timestamp-skips other pre-window lines,
-fully parses the inclusive pre-roll through post-roll range, and stops on the
-first record beyond it. The visible `Session.startTime`, `endTime`, and duration
-always remain the selected discovery boundaries.
+window, and plain options. The browser worker alone reads `File` contents and
+owns Blob streaming and operation publication. Extraction retains the
+log-version record required for a standalone filtered log, cheaply
+timestamp-skips other pre-window lines, fully parses the inclusive pre-roll
+through post-roll range, and stops on the first record beyond it. The visible
+`Session.startTime`, `endTime`, and duration always remain the selected discovery
+boundaries.
 
 Ownership is an evidence graph. Advanced owner GUIDs outrank summon/create
 edges, which outrank the selected recorder's `AFFILIATION_MINE` assumption.
@@ -142,3 +145,33 @@ has a committed schema and decimal-string bigint encoding; filtered log output
 concatenates each retained raw line with its exact source terminator. Browser
 transport creates Blobs and assigns deterministic safe filenames. Neither path
 uses network requests, storage, cookies, or a backend.
+
+## ADR-005: Reducer-driven local workflow and ephemeral downloads
+
+**Status:** Accepted for D08-D09
+
+**Date:** 2026-08-14
+
+The React workflow is a discriminated-union reducer covering waiting,
+discovery, recorder confirmation, explicit character selection, session
+selection, detailed processing, result, recoverable error, and cancellation.
+Side effects remain in a thin application coordinator around
+`ParserWorkerClient`; presentation components receive domain results and never
+reimplement discovery, extraction, filtering, or serialization.
+
+The UI adds its own monotonically increasing operation token to each worker
+promise. The reducer ignores progress or terminal actions whose token does not
+match the currently active state. This preserves coherent replacement, retry,
+and cancellation behavior even before the worker client's independent stale
+response filter is considered.
+
+Normal labels never expose GUIDs. Exact times and durations are formatted from
+the existing raw timestamp and bigint tick contracts. Technical identifiers,
+schema metadata, warnings, and optional debug decisions live inside a closed
+technical disclosure.
+
+`saveSessionDownload` is the DOM completion of D07's
+`createSessionDownload`: it uses a temporary anchor and object URL, removes the
+anchor, and revokes the URL in `finally`. Export serialization and deterministic
+filename generation remain in the existing core/browser transport contracts.
+The complete UI behavior is documented in [`ui-workflow.md`](ui-workflow.md).
