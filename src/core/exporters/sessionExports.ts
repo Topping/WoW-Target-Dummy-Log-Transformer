@@ -299,7 +299,7 @@ export function serializeEncounterSessionLog(
     warnings: [
       parserWarning(
         "WOWCOACH_COMPATIBILITY_TEMPLATE_USED",
-        "This WowCoach-compatible export uses the verified Blackwing Lair/Razorgore template and fixed COMBATANT_INFO from data/boss-encounter.txt. Selected dummy identity, neutral NPC flags, and advanced map IDs are transposed, and the encounter ends as a wipe.",
+        "This encounter-format export uses the verified Blackwing Lair/Razorgore compatibility template and fixed COMBATANT_INFO from data/boss-encounter.txt. Selected dummy identity, neutral NPC flags, and advanced map IDs are transposed, and the encounter ends as a wipe.",
         {
           details: {
             selectedPlayerGuid: session.player.guid,
@@ -514,5 +514,5 @@ export function sessionExportFilename(
   const time = compactTimestamp(session.startTime.raw);
   return kind === "json"
     ? `${actor}-${time}.session.json`
-    : `${actor}-${time}.session.encounter.log`;
+    : `${actor}-${time}.session.encounter.txt`;
 }

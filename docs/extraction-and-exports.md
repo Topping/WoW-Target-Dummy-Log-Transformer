@@ -99,7 +99,13 @@ desktop safety boundaries, not source-file size limits. Passing an explicit
 `budgets` object replaces the default set. Full measurement conditions and
 justification are in [`d10-hardening.md`](d10-hardening.md).
 
-## Session JSON v1
+## Session JSON v1 (internal/core capability)
+
+Session JSON remains a tested serialization and interchange capability for the
+core library. It is not exposed as a download in the public application: the
+public workflow offers only the WowCoach-compatible encounter log. Developer
+tooling and automated tests may continue to use JSON for schema validation,
+round trips, diagnostics, and profiling.
 
 `serializeSessionJson` produces a document with:
 
@@ -163,12 +169,13 @@ A future character-metadata input, such as a SimulationCraft profile, should
 replace the fixed `COMBATANT_INFO` payload.
 
 `createSessionDownload` is the browser boundary that creates a Blob and assigns
-a filename. Names use a lowercase ASCII-safe player component and compact start
-timestamp, for example:
+a filename. The boundary continues to support both serializers for internal
+callers, but the public UI requests only the encounter-log form. Names use a
+lowercase ASCII-safe player component and compact start timestamp, for example:
 
 ```text
 p-lsefatter-argentdawn-eu-20260814-114738.session.json
-p-lsefatter-argentdawn-eu-20260814-114738.session.encounter.log
+p-lsefatter-argentdawn-eu-20260814-114738.session.encounter.txt
 ```
 
 The exporters make no network request and use no localStorage, IndexedDB,
@@ -179,14 +186,18 @@ D09 adds `saveSessionDownload` as the final browser/DOM handoff. It calls
 anchor, triggers the deterministic download, then removes the anchor and revokes
 the URL in `finally`. A hard serialization limit creates neither an object URL
 nor a download. Soft warnings are returned alongside the completed download for
-the UI to display.
+the UI to display. The encounter-log download is the primary action at the top
+of the result. Attempt statistics and parser/debug information are secondary and
+closed by default.
 
-## D11 deployed-form export validation
+## D11 deployed-form export validation (historical)
 
-The repository-scoped production Playwright workflow downloads both formats
-from the emitted static application. It verifies the JSON format/version and
+The D11 release workflow recorded on 2026-08-14 downloaded both formats from
+the then-current public application. It verified the JSON format/version and
 the filtered log's retained `COMBAT_LOG_VERSION` record in addition to their
-deterministic filenames. Network observation begins before file intake and
-allows only the bodyless same-origin parser-worker request; the download uses
-the existing temporary `blob:` URL and does not become a combat-data request.
-The same workflow is run against the URL returned after a Pages deployment.
+deterministic filenames. Those results remain historical evidence for both core
+serializers; they do not describe the current public controls. Current browser
+acceptance follows the streamlined file-to-encounter-log workflow. Network
+observation begins before file intake and allows only the bodyless same-origin
+parser-worker request; the download uses the existing temporary `blob:` URL and
+does not become a combat-data request.

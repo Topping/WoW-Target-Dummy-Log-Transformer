@@ -92,9 +92,6 @@ function ProgressView({
     percentage === 100 ? 100 : Math.floor(percentage / 10) * 10;
   return (
     <div className="progress-panel">
-      <p className="phase-text">
-        {progress === undefined ? "Starting…" : phaseLabel(progress.phase)}
-      </p>
       <progress
         aria-label="Combat log processing progress"
         max={total || 1}
@@ -102,12 +99,7 @@ function ProgressView({
       >
         {String(percentage)}%
       </progress>
-      <p className="progress-copy">
-        {formatBytes(processed)} of {formatBytes(total)} read · {percentage}%
-      </p>
-      {progress?.status === undefined ? null : (
-        <p className="muted">{progress.status}</p>
-      )}
+      <p className="progress-copy">{percentage}%</p>
       <p
         className="sr-only"
         role="status"
@@ -134,7 +126,7 @@ function WarningList({
       aria-labelledby="warnings-title"
       role="status"
     >
-      <h3 id="warnings-title">Warnings</h3>
+      <h3 id="warnings-title">Things to check</h3>
       <ul>
         {warnings.map((warning, index) => (
           <li key={`${warning.code}-${String(index)}`}>{warning.message}</li>
@@ -151,81 +143,55 @@ function WarningList({
 function SessionCard({
   candidate,
   discovery,
-  selected,
-  onSelect,
+  onChoose,
 }: {
   readonly candidate: SessionCandidate;
   readonly discovery: DiscoveryResult;
-  readonly selected: boolean;
-  readonly onSelect: () => void;
+  readonly onChoose: () => void;
 }) {
-  const targetDamage = candidate.targetGuids
-    .map((guid) => discovery.targets.find((target) => target.guid === guid))
-    .filter((target) => target !== undefined)
-    .reduce((sum, target) => sum + target.damageFromPlayer, 0);
   return (
-    <label className={`session-card${selected ? " selected" : ""}`}>
-      <input
-        type="radio"
-        name="session"
-        checked={selected}
-        onChange={onSelect}
-      />
-      <span className="session-card-body">
-        <span className="session-heading">
+    <article className="session-card">
+      <div className="session-card-body">
+        <div className="session-heading">
           <strong>
             {candidate.confidence === "likely"
-              ? "Likely training attempt"
+              ? "Recommended attempt"
               : candidate.confidence === "possible"
-                ? "Possible training attempt"
-                : "Incidental interaction"}
+                ? "Possible attempt"
+                : "Brief interaction"}
           </strong>
           <span>{formatDuration(candidate.durationTicks)}</span>
-        </span>
-        <span className="time-range">
-          {formatVisibleTime(candidate.startTime)} →{" "}
-          {formatVisibleTime(candidate.endTime)}
-        </span>
-        <span className="target-label">
+        </div>
+        <p className="time-range">
+          {formatVisibleTime(candidate.startTime)} ·{" "}
           {candidate.targetGuids.length === 1
-            ? "Target"
+            ? targetName(discovery, candidate.targetGuids[0])
             : `${String(candidate.targetGuids.length)} targets`}
-        </span>
-        <ul className="target-list">
-          {candidate.targetGuids.map((guid, index) => (
-            <li key={guid}>
-              {candidate.targetGuids.length > 1
-                ? `Target ${String(index + 1)}: `
-                : ""}
-              {targetName(discovery, guid)}
-            </li>
-          ))}
-        </ul>
-        {targetDamage > 0 ? (
-          <span className="muted">
-            {formatCount(targetDamage)} damage observed against these target
-            instances across this file
-          </span>
-        ) : null}
+        </p>
+        <div className="session-card-actions">
+          <button type="button" onClick={onChoose}>
+            Use this attempt
+          </button>
+        </div>
         <details>
-          <summary>Why this session was suggested</summary>
+          <summary>Why this attempt?</summary>
           <ul>
             {candidate.reasons.map((reason) => (
               <li key={reason.code}>{reason.description}</li>
             ))}
           </ul>
         </details>
-      </span>
-    </label>
+      </div>
+    </article>
   );
 }
 
 function SessionGroups({
   state,
-  onSelect,
+  onChoose,
 }: {
   readonly state: Extract<AnalyzerState, { status: "session-selection" }>;
-  readonly onSelect: (sessionId: string) => void;
+  readonly onChoose: (candidate: SessionCandidate) => void;
 }) {
   const sessions = state.discovery.sessions.filter(
     (session) => session.playerGuid === state.playerGuid,
@@ -249,15 +215,14 @@ function SessionGroups({
         </p>
         {incidental.length > 0 ? (
           <details>
-            <summary>Advanced: incidental interactions</summary>
+            <summary>Brief interactions</summary>
             {incidental.map((candidate) => (
               <SessionCard
                 key={candidate.id}
                 candidate={candidate}
                 discovery={state.discovery}
-                selected={state.selectedSessionId === candidate.id}
-                onSelect={() => {
-                  onSelect(candidate.id);
+                onChoose={() => {
+                  onChoose(candidate);
                 }}
               />
             ))}
@@ -271,16 +236,15 @@ function SessionGroups({
     <>
       {likely.length > 0 ? (
         <section aria-labelledby="likely-title">
-          <h3 id="likely-title">Likely attempts</h3>
+          <h3 id="likely-title">Recommended</h3>
           <div className="card-stack">
             {likely.map((candidate) => (
               <SessionCard
                 key={candidate.id}
                 candidate={candidate}
                 discovery={state.discovery}
-                selected={state.selectedSessionId === candidate.id}
-                onSelect={() => {
-                  onSelect(candidate.id);
+                onChoose={() => {
+                  onChoose(candidate);
                 }}
               />
             ))}
@@ -289,20 +253,15 @@ function SessionGroups({
       ) : null}
       {possible.length > 0 ? (
         <section aria-labelledby="possible-title">
-          <h3 id="possible-title">Other possible sessions</h3>
-          <p className="muted">
-            These were shorter or had less sustained activity, but may still be
-            the attempt you want.
-          </p>
+          <h3 id="possible-title">Other attempts</h3>
           <div className="card-stack">
             {possible.map((candidate) => (
               <SessionCard
                 key={candidate.id}
                 candidate={candidate}
                 discovery={state.discovery}
-                selected={state.selectedSessionId === candidate.id}
-                onSelect={() => {
-                  onSelect(candidate.id);
+                onChoose={() => {
+                  onChoose(candidate);
                 }}
               />
             ))}
@@ -311,16 +270,15 @@ function SessionGroups({
       ) : null}
       {incidental.length > 0 ? (
         <details className="advanced-panel">
-          <summary>Advanced: incidental interactions</summary>
+          <summary>Brief interactions</summary>
           <div className="card-stack">
             {incidental.map((candidate) => (
               <SessionCard
                 key={candidate.id}
                 candidate={candidate}
                 discovery={state.discovery}
-                selected={state.selectedSessionId === candidate.id}
-                onSelect={() => {
-                  onSelect(candidate.id);
+                onChoose={() => {
+                  onChoose(candidate);
                 }}
               />
             ))}
@@ -371,229 +329,35 @@ function Summary({
     targetGuids: session.targets.map((target) => target.guid),
     focusTargetGuid: session.focusTargetGuid,
     actors: session.actors,
+    statistics: session.statistics,
     warnings: allWarnings,
     debugDecisions: session.debugDecisions,
   };
   return (
-    <div className="summary-layout">
-      <section className="summary-card" aria-labelledby="overview-title">
-        <h3 id="overview-title">Attempt overview</h3>
-        <dl className="summary-list">
-          <div>
-            <dt>Character</dt>
-            <dd>{session.player.name ?? "Unnamed character"}</dd>
-          </div>
-          <div>
-            <dt>Visible range</dt>
-            <dd>
-              {formatVisibleTime(session.startTime)} →{" "}
-              {formatVisibleTime(session.endTime)}
-            </dd>
-          </div>
-          <div>
-            <dt>Exact duration</dt>
-            <dd>{formatDuration(session.durationTicks)}</dd>
-          </div>
-          <div>
-            <dt>Relevant events</dt>
-            <dd>{formatCount(session.statistics.relevantEventCount)}</dd>
-          </div>
-          <div>
-            <dt>Nearby events removed</dt>
-            <dd>{formatCount(session.statistics.removedEventCount)}</dd>
-          </div>
-          <div>
-            <dt>External effects</dt>
-            <dd>{formatCount(session.statistics.externalEffectCount)}</dd>
-          </div>
-          <div>
-            <dt>Unknown event types</dt>
-            <dd>{formatCount(session.statistics.unknownEventTypeCount)}</dd>
-          </div>
-        </dl>
-      </section>
-
-      <section className="summary-card" aria-labelledby="targets-title">
-        <h3 id="targets-title">
-          {session.targets.length === 1
-            ? "Target"
-            : `All ${String(session.targets.length)} targets`}
-        </h3>
-        {focus === undefined ? null : (
-          <p className="focus-target">
-            Focus target: {focus.name ?? "Unnamed target"}
+    <div className="result-summary">
+      <section className="result-hero" aria-labelledby="download-title">
+        <div>
+          <p className="recommended-label">Ready to upload</p>
+          <h3 id="download-title">
+            {session.player.name ?? "Unnamed character"}
+          </h3>
+          <p className="result-meta">
+            {formatDuration(session.durationTicks)} ·{" "}
+            {session.targets.length === 1
+              ? (session.targets[0].name ?? "1 target")
+              : `${String(session.targets.length)} targets`}
           </p>
-        )}
-        <div className="target-stat-grid">
-          {session.statistics.targets.map((statistics, index) => {
-            const target = session.targets.find(
-              (candidate) => candidate.guid === statistics.targetGuid,
-            );
-            return (
-              <article key={statistics.targetGuid}>
-                <h4>
-                  {session.targets.length > 1
-                    ? `Target ${String(index + 1)}: `
-                    : ""}
-                  {target?.name ?? "Unnamed target"}
-                </h4>
-                <dl>
-                  <div>
-                    <dt>Relevant events</dt>
-                    <dd>{formatCount(statistics.relevantEventCount)}</dd>
-                  </div>
-                  <div>
-                    <dt>Outgoing / incoming</dt>
-                    <dd>
-                      {formatCount(statistics.outgoingEventCount)} /{" "}
-                      {formatCount(statistics.incomingEventCount)}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Damage events</dt>
-                    <dd>{formatCount(statistics.damageEventCount)}</dd>
-                  </div>
-                  <div>
-                    <dt>Observed damage</dt>
-                    <dd>{formatCount(statistics.observedDamageAmount)}</dd>
-                  </div>
-                </dl>
-              </article>
-            );
-          })}
         </div>
-      </section>
-
-      <section className="summary-card" aria-labelledby="entities-title">
-        <h3 id="entities-title">Controlled entities</h3>
-        <p>
-          {formatCount(session.statistics.controlledEntityCount)} pet, guardian,
-          summon, or other controlled{" "}
-          {session.statistics.controlledEntityCount === 1
-            ? "entity was"
-            : "entities were"}{" "}
-          retained.
-        </p>
-        {controlled.length === 0 ? (
-          <p className="muted">No controlled entities were detected.</p>
-        ) : (
-          <ul>
-            {controlled.map((actor) => (
-              <li key={actor.guid}>
-                <strong>{actor.name ?? "Unnamed controlled entity"}</strong>
-                {actor.ownershipEvidence === undefined ? null : (
-                  <span className="muted">
-                    {" "}
-                    · evidence: {actor.ownershipEvidence.join(", ")}
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="summary-card" aria-labelledby="audit-title">
-        <h3 id="audit-title">Filtering audit</h3>
-        <p>
-          Every record considered in the selected reconstruction window is
-          counted here.
-        </p>
-        <dl className="summary-list compact">
-          <div>
-            <dt>Records considered</dt>
-            <dd>
-              {formatCount(session.statistics.filtering.consideredRecordCount)}
-            </dd>
-          </div>
-          <div>
-            <dt>Kept</dt>
-            <dd>{formatCount(session.statistics.filtering.keptRecordCount)}</dd>
-          </div>
-          <div>
-            <dt>Removed</dt>
-            <dd>
-              {formatCount(session.statistics.filtering.removedRecordCount)}
-            </dd>
-          </div>
-          <div>
-            <dt>Skipped before pre-roll</dt>
-            <dd>
-              {formatCount(
-                session.statistics.filtering.skippedBeforePreRollCount,
-              )}
-            </dd>
-          </div>
-          <div>
-            <dt>Source bytes read</dt>
-            <dd>{formatBytes(session.statistics.filtering.bytesRead)}</dd>
-          </div>
-          <div>
-            <dt>Retained source bytes</dt>
-            <dd>
-              {formatBytes(session.statistics.filtering.estimatedRetainedBytes)}
-            </dd>
-          </div>
-        </dl>
-        <details>
-          <summary>Show kept and removed reasons</summary>
-          <div className="audit-reasons">
-            <div>
-              <h4>Kept</h4>
-              <ul>
-                {Object.entries(session.statistics.filtering.keptByReason).map(
-                  ([reason, count]) => (
-                    <li key={reason}>
-                      {reason}: {formatCount(count)}
-                    </li>
-                  ),
-                )}
-              </ul>
-            </div>
-            <div>
-              <h4>Removed</h4>
-              <ul>
-                {Object.entries(
-                  session.statistics.filtering.removedByReason,
-                ).map(([reason, count]) => (
-                  <li key={reason}>
-                    {reason}: {formatCount(count)}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </details>
-      </section>
-
-      <WarningList warnings={allWarnings} />
-
-      <section className="export-panel" aria-labelledby="export-title">
-        <h3 id="export-title">Download your clean session</h3>
-        <p>
-          JSON is the complete normalized session. The encounter log wraps the
-          selected dummy attempt in the known-good Blackwing Lair zone/map,
-          Razorgore encounter, and character metadata from the reference capture
-          for WowCoach-compatible upload.
-        </p>
-        <div className="button-row">
+        <div className="result-actions">
           <button
             type="button"
-            onClick={() => {
-              onExport("json");
-            }}
-          >
-            Export session JSON
-          </button>
-          <button
-            type="button"
-            className="secondary-button"
             onClick={() => {
               onExport("encounter-log");
             }}
           >
-            Export encounter combat log
+            Download encounter log
           </button>
+          <p>Formatted for tools that analyze encounter logs.</p>
         </div>
         {state.exportFeedback === undefined ? null : (
           <div
@@ -616,13 +380,86 @@ function Summary({
         )}
       </section>
 
-      <details className="technical-panel">
-        <summary>Technical and debug details</summary>
-        <p>
-          This section includes actor identifiers and parser details intended
-          for troubleshooting.
-        </p>
-        <pre tabIndex={0}>{stringifyTechnicalDetails(technical)}</pre>
+      <WarningList warnings={allWarnings} />
+
+      <details className="session-details">
+        <summary>View attempt details</summary>
+        <div className="summary-layout">
+          <section className="summary-card" aria-labelledby="overview-title">
+            <h3 id="overview-title">Attempt</h3>
+            <dl className="summary-list">
+              <div>
+                <dt>Started</dt>
+                <dd>{formatVisibleTime(session.startTime)}</dd>
+              </div>
+              <div>
+                <dt>Duration</dt>
+                <dd>{formatDuration(session.durationTicks)}</dd>
+              </div>
+              <div>
+                <dt>Relevant events</dt>
+                <dd>{formatCount(session.statistics.relevantEventCount)}</dd>
+              </div>
+              <div>
+                <dt>Nearby events removed</dt>
+                <dd>{formatCount(session.statistics.removedEventCount)}</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section className="summary-card" aria-labelledby="targets-title">
+            <h3 id="targets-title">
+              {session.targets.length === 1
+                ? "Target"
+                : `${String(session.targets.length)} targets`}
+            </h3>
+            {focus === undefined ? null : (
+              <p className="focus-target">
+                Focus: {focus.name ?? "Unnamed target"}
+              </p>
+            )}
+            <div className="target-stat-grid">
+              {session.statistics.targets.map((statistics) => {
+                const target = session.targets.find(
+                  (candidate) => candidate.guid === statistics.targetGuid,
+                );
+                return (
+                  <article key={statistics.targetGuid}>
+                    <h4>{target?.name ?? "Unnamed target"}</h4>
+                    <dl>
+                      <div>
+                        <dt>Events</dt>
+                        <dd>{formatCount(statistics.relevantEventCount)}</dd>
+                      </div>
+                      <div>
+                        <dt>Observed damage</dt>
+                        <dd>{formatCount(statistics.observedDamageAmount)}</dd>
+                      </div>
+                    </dl>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+
+          {controlled.length === 0 ? null : (
+            <section className="summary-card" aria-labelledby="entities-title">
+              <h3 id="entities-title">Pets and controlled entities</h3>
+              <ul>
+                {controlled.map((actor) => (
+                  <li key={actor.guid}>
+                    {actor.name ?? "Unnamed controlled entity"}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <details className="technical-panel">
+            <summary>Technical details</summary>
+            <pre tabIndex={0}>{stringifyTechnicalDetails(technical)}</pre>
+          </details>
+        </div>
       </details>
     </div>
   );
@@ -638,6 +475,7 @@ export function App({
   const headingRef = useRef<HTMLHeadingElement>(null);
   const clientRef = useRef<AnalyzerWorkerClient | undefined>(undefined);
   const operationNumber = useRef(0);
+  const automaticallyProcessed = useRef(new Set<string>());
 
   const getClient = useCallback((): AnalyzerWorkerClient => {
     clientRef.current ??= createWorkerClient();
@@ -663,6 +501,7 @@ export function App({
 
   const startDiscovery = useCallback(
     (file: File): void => {
+      automaticallyProcessed.current.clear();
       const operationId = nextOperationId();
       dispatch({ type: "START_DISCOVERY", file, operationId });
       void getClient()
@@ -720,6 +559,24 @@ export function App({
     [getClient, nextOperationId],
   );
 
+  useEffect(() => {
+    if (state.status !== "session-selection") return;
+    const likely = state.discovery.sessions.filter(
+      (candidate) =>
+        candidate.playerGuid === state.playerGuid &&
+        candidate.confidence === "likely",
+    );
+    if (likely.length !== 1) return;
+    const candidate = likely[0];
+    if (
+      candidate === undefined ||
+      automaticallyProcessed.current.has(candidate.id)
+    )
+      return;
+    automaticallyProcessed.current.add(candidate.id);
+    startProcessing(state.file, candidate);
+  }, [startProcessing, state]);
+
   const chooseFile = useCallback(() => inputRef.current?.click(), []);
   const receiveFiles = useCallback(
     (files: FileList | readonly File[] | null): void => {
@@ -740,6 +597,15 @@ export function App({
     const operationId = state.operationId;
     getClient().cancel();
     dispatch({ type: "CANCEL_OPERATION", operationId });
+  };
+
+  const startOver = (): void => {
+    if (state.status === "discovering" || state.status === "processing") {
+      clientRef.current?.cancel();
+    }
+    automaticallyProcessed.current.clear();
+    setDragActive(false);
+    dispatch({ type: "RESET" });
   };
 
   const exportSession = (kind: SessionExportKind): void => {
@@ -798,31 +664,28 @@ export function App({
           onDrop={onDrop}
         >
           <div className="file-mark" aria-hidden="true">
-            LOG
+            ↓
           </div>
           <h2 ref={headingRef} tabIndex={-1}>
-            Drop your WoW combat log here
+            Choose your combat log
           </h2>
-          <p>
-            Any filename is accepted. The analyzer checks the file's contents
-            before scanning it.
-          </p>
+          <p>Drop WoWCombatLog.txt here, or choose it from your computer.</p>
           <button type="button" onClick={chooseFile}>
-            Choose a combat log
+            Choose combat log
           </button>
+          <p className="trust-line">
+            <span aria-hidden="true">✓</span> Processed locally. Nothing is
+            uploaded.
+          </p>
         </div>
       );
       break;
     case "discovering":
       workflow = (
         <section className="workflow-card" aria-labelledby="scan-title">
-          <p className="eyebrow">File intake</p>
           <h2 id="scan-title" ref={headingRef} tabIndex={-1}>
-            Checking and scanning your combat log
+            Scanning combat log
           </h2>
-          <p className="file-summary">
-            {state.file.name} · {formatBytes(state.file.size)}
-          </p>
           <ProgressView
             progress={state.progress}
             totalBytes={state.file.size}
@@ -833,44 +696,6 @@ export function App({
         </section>
       );
       break;
-    case "recorder-confirmation":
-      workflow = (
-        <section className="workflow-card" aria-labelledby="recorder-title">
-          <p className="eyebrow">Character found</p>
-          <h2 id="recorder-title" ref={headingRef} tabIndex={-1}>
-            Is this the character that recorded the log?
-          </h2>
-          <p className="detected-character">
-            {playerName(state.discovery, state.playerGuid)}
-          </p>
-          <p className="muted">
-            The combat log marks this character as yours. You can still choose
-            any of the {formatCount(state.discovery.players.length)} detected
-            characters.
-          </p>
-          <div className="button-row">
-            <button
-              type="button"
-              onClick={() => {
-                dispatch({ type: "CONFIRM_RECORDER" });
-              }}
-            >
-              Continue
-            </button>
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() => {
-                dispatch({ type: "CHANGE_CHARACTER" });
-              }}
-            >
-              Change character
-            </button>
-          </div>
-          <WarningList warnings={state.discoveryWarnings} />
-        </section>
-      );
-      break;
     case "character-selection": {
       const submit = (event: SyntheticEvent<HTMLFormElement>): void => {
         event.preventDefault();
@@ -878,11 +703,10 @@ export function App({
       };
       workflow = (
         <section className="workflow-card" aria-labelledby="character-title">
-          <p className="eyebrow">Choose character</p>
           <h2 id="character-title" ref={headingRef} tabIndex={-1}>
-            Which character do you want to analyze?
+            Choose your character
           </h2>
-          <p>Every player character found in the file is listed below.</p>
+          <p>We found more than one possible recorder.</p>
           <form onSubmit={submit}>
             <fieldset className="choice-list">
               <legend className="sr-only">Detected player characters</legend>
@@ -908,7 +732,7 @@ export function App({
               type="submit"
               disabled={state.selectedPlayerGuid === undefined}
             >
-              Continue to sessions
+              Continue
             </button>
           </form>
           <WarningList warnings={state.discoveryWarnings} />
@@ -917,21 +741,26 @@ export function App({
       break;
     }
     case "session-selection": {
-      const selected = state.discovery.sessions.find(
-        (session) =>
-          session.id === state.selectedSessionId &&
-          session.playerGuid === state.playerGuid,
-      );
       workflow = (
         <section
           className="workflow-card wide"
           aria-labelledby="sessions-title"
         >
-          <p className="eyebrow">Choose attempt</p>
           <h2 id="sessions-title" ref={headingRef} tabIndex={-1}>
-            Training sessions for{" "}
-            {playerName(state.discovery, state.playerGuid)}
+            Choose an attempt
           </h2>
+          <div className="inline-context">
+            <span>{playerName(state.discovery, state.playerGuid)}</span>
+            <button
+              type="button"
+              className="link-button"
+              onClick={() => {
+                dispatch({ type: "CHANGE_CHARACTER" });
+              }}
+            >
+              Change character
+            </button>
+          </div>
           {state.notice === undefined ? null : (
             <p className="notice" role="status">
               {state.notice}
@@ -939,31 +768,10 @@ export function App({
           )}
           <SessionGroups
             state={state}
-            onSelect={(sessionId) => {
-              dispatch({ type: "SELECT_SESSION", sessionId });
+            onChoose={(candidate) => {
+              startProcessing(state.file, candidate);
             }}
           />
-          <div className="button-row sticky-actions">
-            <button
-              type="button"
-              disabled={selected === undefined}
-              onClick={() => {
-                if (selected !== undefined)
-                  startProcessing(state.file, selected);
-              }}
-            >
-              Process selected attempt
-            </button>
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() => {
-                dispatch({ type: "CHANGE_CHARACTER" });
-              }}
-            >
-              Choose another character
-            </button>
-          </div>
         </section>
       );
       break;
@@ -971,14 +779,9 @@ export function App({
     case "processing":
       workflow = (
         <section className="workflow-card" aria-labelledby="process-title">
-          <p className="eyebrow">Detailed processing</p>
           <h2 id="process-title" ref={headingRef} tabIndex={-1}>
-            Building your clean training session
+            Preparing encounter log
           </h2>
-          <p>
-            Reading the selected time window, resolving controlled entities, and
-            removing unrelated nearby activity.
-          </p>
           <ProgressView
             progress={state.progress}
             totalBytes={state.file.size}
@@ -992,9 +795,8 @@ export function App({
     case "result":
       workflow = (
         <section className="workflow-card wide" aria-labelledby="result-title">
-          <p className="eyebrow">Session ready</p>
           <h2 id="result-title" ref={headingRef} tabIndex={-1}>
-            Your clean training session
+            Your encounter log is ready
           </h2>
           <Summary state={state} onExport={exportSession} />
           <div className="button-row workflow-navigation">
@@ -1005,16 +807,7 @@ export function App({
                 dispatch({ type: "RETURN_TO_SESSIONS" });
               }}
             >
-              Select another session
-            </button>
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() => {
-                dispatch({ type: "CHANGE_CHARACTER" });
-              }}
-            >
-              Choose another character
+              Choose a different attempt
             </button>
           </div>
         </section>
@@ -1122,41 +915,22 @@ export function App({
 
   return (
     <div className="page-shell">
-      <header className="site-header">
-        <a
-          className="brand"
-          href="./"
-          aria-label="WoW Training Dummy Log Analyzer home"
-        >
-          Combat Lab
-        </a>
-        <span className="status-badge">Browser only</span>
-      </header>
-
-      <main>
-        <section className="hero" aria-labelledby="page-title">
-          <p className="eyebrow">WoW Retail · Training dummies</p>
-          <h1 id="page-title">
-            Find the clean attempt inside your combat log.
-          </h1>
-          <p className="lede">
-            Choose a file, confirm your character, then select the training
-            session you want to review and export.
-          </p>
-        </section>
-
-        <aside className="privacy-card" aria-labelledby="privacy-title">
-          <span className="privacy-icon" aria-hidden="true">
-            ✓
-          </span>
-          <div>
-            <h2 id="privacy-title">Your combat log stays on your computer.</h2>
-            <p>
-              This file is processed locally in your browser and is never
-              uploaded.
+      <main
+        className={state.status === "waiting" ? "landing-main" : "app-main"}
+      >
+        {state.status === "waiting" ? (
+          <section className="hero" aria-labelledby="page-title">
+            <h1 id="page-title">
+              Turn a target dummy log into an encounter log.
+            </h1>
+            <p className="lede">
+              Create a simulated encounter from your WoW Retail combat log for
+              use with encounter analysis tools.
             </p>
-          </div>
-        </aside>
+          </section>
+        ) : (
+          <h1 className="sr-only">Target dummy encounter converter</h1>
+        )}
 
         <input
           ref={inputRef}
@@ -1175,18 +949,33 @@ export function App({
             <span>
               {currentFile.name} · {formatBytes(currentFile.size)}
             </span>
-            <button type="button" className="text-button" onClick={chooseFile}>
-              Choose another file
+            <button type="button" className="text-button" onClick={startOver}>
+              Start over
             </button>
           </div>
         )}
 
         <div className="workflow-region">{workflow}</div>
-      </main>
 
-      <footer>
-        <p>No account · No analytics · No server</p>
-      </footer>
+        {state.status === "waiting" ? (
+          <section className="user-guide" aria-labelledby="guide-title">
+            <h2 id="guide-title">How to use it</h2>
+            <ol>
+              <li>Upload your target dummy combat log.</li>
+              <li>
+                Download the transformed <code>.txt</code> file.
+              </li>
+              <li>
+                Upload that file to Warcraft Logs with the Archon desktop
+                client.
+              </li>
+              <li>
+                Copy the Warcraft Logs link into your chosen analysis tool.
+              </li>
+            </ol>
+          </section>
+        ) : null}
+      </main>
     </div>
   );
 }

@@ -2,9 +2,10 @@
 
 **Status:** Initial breakdown  
 **Source of truth:** [`../spec.md`](../spec.md)  
-**Release target:** A static, browser-only application that extracts one selected
-player's interaction with one or more training dummies during one selected
-attempt.
+**Release target:** A static application that turns one selected player's
+training-dummy attempt into a simulated encounter log for encounter analysis
+tools. All processing
+remains local to the browser.
 
 ## How to use this plan
 
@@ -18,7 +19,9 @@ boundary, but their acceptance criteria should not be diluted.
 
 Rotation analysis, SimulationCraft integration, a PWA, analytics, and
 server-side processing are not part of this plan. Encounter-shaped text export
-was added after the initial v0.2 release in response to local validation.
+was added after the initial v0.2 release in response to local validation and is
+now the only public export. Canonical JSON remains available to the core and
+developer tooling, not as an end-user control.
 
 ## What the current captures tell us
 
@@ -377,17 +380,18 @@ tests, audit-accounting invariants, and an end-to-end noisy-capture golden test.
 
 **Dependencies:** D03-D05.
 
-## D07 — JSON and encounter-log exports
+## D07 — Internal JSON and public encounter-log exports
 
 **Implementation:** Complete on the current branch.
 
-**Outcome:** A processed session can be downloaded locally in canonical JSON and
-WowCoach-compatible encounter-log forms.
+**Outcome:** A processed session can be serialized internally as canonical JSON
+and downloaded publicly in WowCoach-compatible encounter-log form.
 
 **Scope**
 
-- Versioned `session.json` serialization with parser/schema metadata.
-- `session.encounter.log` from filtered in-window source records plus generated
+- Versioned `session.json` serialization with parser/schema metadata for core
+  round trips, tests, diagnostics, and profiling; it is not a public UI action.
+- `session.encounter.txt` from filtered in-window source records plus generated
   encounter and character metadata.
 - Browser `Blob` download generation and safe, deterministic filenames.
 - Export warnings and size protection where generation may be expensive.
@@ -416,16 +420,21 @@ detected attempt.
 
 **Scope**
 
-- Explicit UI state machine for waiting, validation/scanning, character
-  selection, and session selection.
+- Explicit UI state machine for waiting, validation/scanning, automatic or
+  explicit character routing, automatic likely-attempt processing, and
+  multi-attempt choice.
 - Keyboard-accessible file picker plus drag-and-drop.
 - Local-processing/privacy message, file summary, real progress, and cancel.
 - Present every deduplicated player character found in the file. When exactly
-  one player GUID/type carries `AFFILIATION_MINE`, preselect it and show a
-  confirmation with Continue and Change Character. Zero or multiple matches
-  require explicit selection; no valid character is hidden.
-- Session cards with target, time range, duration, damage, and confidence wording
-  without GUIDs in normal mode.
+  one player GUID/type carries `AFFILIATION_MINE`, use it immediately without a
+  recorder-confirmation screen. Zero or multiple matches require explicit
+  selection; no valid character is hidden.
+- When the chosen character has one unique likely attempt, process it
+  automatically. When there is no unique likely attempt, each available session
+  card exposes a direct **Use this attempt** action rather than requiring radio
+  selection plus a separate confirmation click.
+- Session cards show only the target/time context, duration, and confidence
+  wording needed to choose, without GUIDs in normal mode.
 - Show likely attempts first and uncertain but substantive groups under “Other
   possible sessions.” Isolated incidental interactions remain available only in
   advanced/debug output.
@@ -433,11 +442,12 @@ detected attempt.
 
 **Acceptance**
 
-- Happy path and multiple-player flows reach a selected session using the noisy
-  capture.
-- The supplied captures preselect Pølsefatter from the mine flag; synthetic zero-
-  match and multiple-match cases display the full selection UI.
-- Cancelling or choosing a replacement file returns to a coherent state and
+- The unique-character/unique-likely-attempt happy path reaches processing
+  without an intermediate confirmation click; multiple-player and
+  multiple-attempt flows remain explicit and recoverable.
+- The supplied captures automatically use Pølsefatter from the mine flag;
+  synthetic zero-match and multiple-match cases display the full selection UI.
+- Cancelling or using **Start over** returns to a coherent intake state and
   stale worker messages cannot advance the UI.
 - All controls work with a keyboard, progress has textual status, and meaning is
   not conveyed by colour alone.
@@ -451,24 +461,24 @@ tests through session selection.
 
 **Implementation:** Complete on the current branch.
 
-**Outcome:** The selected attempt can be processed, reviewed, and exported in a
-complete end-to-end workflow.
+**Outcome:** The selected attempt can be processed and downloaded as an
+encounter log in a compact end-to-end workflow.
 
 **Scope**
 
-- Detailed-processing progress and cancellation.
-- Session summary for character, target set, range, duration, relevant/removed
-  event counts, controlled entities, external effects, unknown types, and
-  warnings.
-- JSON and encounter-log export actions.
-- Progressive technical details/debug information without exposing GUIDs by
-  default.
+- Compact, truthful processing progress and cancellation.
+- A result header containing character, duration, target count, actionable
+  warnings, and the primary encounter-log download above detailed analysis.
+- One public encounter-log export action. JSON stays an internal/core export.
+- Attempt statistics and technical/debug information in closed disclosures,
+  without exposing GUIDs by default.
 - Reset/select-another-file and select-another-session paths.
 
 **Acceptance**
 
-- The complete happy path works without terminal knowledge: select file, choose
-  character/session, process, review, and export.
+- The common happy path works without terminal knowledge: choose file, allow
+  automatic routing/processing, and download the encounter log. Choices appear
+  only for genuine character or attempt ambiguity.
 - Warnings are understandable, non-fatal warnings do not block valid exports,
   and fatal errors offer a recovery action.
 - Refresh may reset the app; no log/session contents are encoded in the URL or
@@ -565,6 +575,7 @@ validated WowCoach-compatible encounter form.
 - Transpose selected dummy identity and flags plus advanced map IDs, and close
   the attempt as a wipe without fake kill/death records.
 - Expose the encounter log as the primary text export.
+- Do not expose the internal JSON serializer as a competing public action.
 
 **Acceptance**
 
@@ -590,7 +601,7 @@ browser download workflow, and documentation review.
 | Current Retail parsing, Unicode, unknown-event tolerance | D02, D03 |
 | Character, target, and attempt discovery/splitting | D05 |
 | Detailed reparse, ownership, external effects, filtering | D06 |
-| Normalized JSON and encounter-shaped log | D07, D12 |
+| Internal normalized JSON and public encounter-shaped log | D07, D12 |
 | Non-technical end-to-end workflow and errors | D08, D09 |
 | Automated parser tests independent of UI | D00, D02, D03, D05-D07 |
 | Accessibility and supported-browser confidence | D08-D10 |
@@ -615,13 +626,13 @@ attempts as Likely and short approved split groups as Possible.
 ### Character selection
 
 Pass one returns every deduplicated player character present in the log. If
-exactly one actor has a player GUID/type and `AFFILIATION_MINE`, the UI preselects
-it as the recording character and asks for confirmation, offering Continue and
-Change Character. If no player or multiple players match—such as a concatenated
-log spanning several locally recorded characters—the UI requires explicit
-selection from the complete list. Confirmation or manual selection establishes
-the primary character for target/session discovery and extraction; heuristics
-never remove valid characters.
+exactly one actor has a player GUID/type and `AFFILIATION_MINE`, the UI uses it
+as the recording character immediately; there is no recorder-confirmation
+screen. If no player or multiple players match—such as a concatenated log
+spanning several locally recorded characters—the UI requires explicit selection
+from the complete list. Automatic or manual selection establishes the primary
+character for target/session discovery and extraction; heuristics never remove
+valid characters.
 
 ### UI framework and static hosting
 
@@ -658,13 +669,24 @@ manual override remains available for schema testing.
 
 ### Session discovery presentation and boundary hierarchy
 
-After character selection, the normal UI shows all meaningful activity-session
-groups: likely attempts first, then uncertain but substantive groups under
-“Other possible sessions.” Isolated incidental interactions are restricted to
-advanced/debug output. A group is scoped to the selected player plus detected
-owned entities and contains the set of targets affected during that activity
-window. Target count is descriptive—single-target and multi-target/cleave
-attempts are equally valid—and does not reduce confidence.
+After character selection, one unique likely attempt proceeds directly to
+processing. When user choice is genuinely needed, the normal UI shows all
+meaningful activity-session groups: likely attempts first, then uncertain but
+substantive groups under “Other possible sessions,” with a direct action on each
+card. Isolated incidental interactions are restricted to advanced/debug output.
+A group is scoped to the selected player plus detected owned entities and
+contains the set of targets affected during that activity window. Target count
+is descriptive—single-target and multi-target/cleave attempts are equally
+valid—and does not reduce confidence.
+
+### Public interface hierarchy
+
+The interface is a converter first. It uses a centered, compact workflow and
+system typography with one restrained accent. There is no standalone product
+header or “Browser only” badge. Privacy is stated once near file
+intake. Progress copy describes the user-visible task rather than parser phases.
+The result leads with the encounter-log download; statistics and technical data
+remain closed until requested.
 
 Schemas may declare explicit combat boundary records when a log version provides
 them. No generic combat-start/combat-end marker appears in either supplied

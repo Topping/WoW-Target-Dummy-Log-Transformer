@@ -1,19 +1,31 @@
-# WoW Training Dummy Log Analyzer
+# WoW Dummy Log Converter
 
-A privacy-preserving browser application for extracting one character's
-training-dummy attempt from a noisy World of Warcraft Retail combat log.
+A privacy-preserving browser application that turns one character's
+training-dummy attempt from a noisy World of Warcraft Retail combat log into a
+simulated encounter log for use with encounter analysis tools.
 
 The current D00-D11 implementation provides the characterized fixture set, shared
 TypeScript contracts, incremental UTF-8/line/CSV parser primitives, a registered
 Retail 12.1.0 combat-log schema, canonical events and actors, the typed worker
 boundary and lifecycle, bounded player/target/session discovery, detailed
 streaming extraction and ownership-aware filtering, versioned JSON and
-WowCoach-compatible encounter-log exports, and the complete accessible React
-file-to-export workflow.
-The UI supports content-based picker/drop intake, recorder confirmation or full
-character selection, per-character session grouping, cancellable two-pass
-processing, multi-target summaries, warnings/debug disclosure, and local JSON
-and encounter-log downloads.
+WowCoach-compatible encounter-log serializers, and the complete accessible
+React file-to-export workflow. The public UI is deliberately positioned as a
+converter and offers only the encounter-log download; versioned JSON remains an
+internal core capability.
+
+The streamlined UI supports content-based picker/drop intake, automatic use of
+a uniquely identified recorder, automatic processing when that recorder has one
+Likely attempt, and explicit character or attempt choices only when the log is
+ambiguous. Attempt cards have a direct **Use this attempt** action. Scanning and
+processing show concise, cancellable progress, while the ready screen leads with
+the encounter-log download and keeps attempt and technical data closed by
+default. The local-processing trust message appears on the landing intake only,
+with no standalone product header or “Browser only” badge above the task. A
+short guide below the picker covers conversion, the `.txt` download, upload to
+Warcraft Logs through the Archon desktop client, and using the resulting log
+link with an encounter analysis tool. After intake, **Start over** returns to
+the landing drop area instead of immediately reopening the system file picker.
 
 The encounter-log export uses the manually verified WowCoach-compatible
 Blackwing Lair/Razorgore envelope, transposes the selected dummy combat stream,
@@ -74,4 +86,5 @@ are in
 The production build in `dist/` contains only static HTML, CSS, JavaScript, and
 the separately emitted JavaScript parser worker.
 Combat logs remain in the browser: there is no backend, analytics, persistence,
-router, service worker, or external state-management layer.
+router, service worker, or external state-management layer. The landing screen
+states this once as “Processed locally. Nothing is uploaded.”

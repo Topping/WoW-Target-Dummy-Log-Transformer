@@ -231,7 +231,7 @@ describe("WowCoach-compatible encounter log and browser download transport", () 
       "p-lsefatter-examplerealm-20260814-133001.session.json",
     );
     expect(sessionExportFilename(value, "encounter-log")).toBe(
-      "p-lsefatter-examplerealm-20260814-133001.session.encounter.log",
+      "p-lsefatter-examplerealm-20260814-133001.session.encounter.txt",
     );
     const first = createSessionDownload(value, "json");
     const second = createSessionDownload(value, "json");

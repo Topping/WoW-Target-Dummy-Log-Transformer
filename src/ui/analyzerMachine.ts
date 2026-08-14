@@ -35,16 +35,11 @@ export type AnalyzerState =
       readonly progress?: ProcessingProgress;
     }
   | (DiscoveryContext & {
-      readonly status: "recorder-confirmation";
-      readonly playerGuid: string;
-    })
-  | (DiscoveryContext & {
       readonly status: "character-selection";
       readonly selectedPlayerGuid?: string;
     })
   | (CharacterContext & {
       readonly status: "session-selection";
-      readonly selectedSessionId?: string;
       readonly notice?: string;
     })
   | (CharacterContext & {
@@ -101,11 +96,9 @@ export type AnalyzerAction =
       readonly operationId: string;
       readonly error: AppError;
     }
-  | { readonly type: "CONFIRM_RECORDER" }
   | { readonly type: "CHANGE_CHARACTER" }
   | { readonly type: "SELECT_CHARACTER"; readonly playerGuid: string }
   | { readonly type: "CONTINUE_CHARACTER" }
-  | { readonly type: "SELECT_SESSION"; readonly sessionId: string }
   | {
       readonly type: "START_PROCESSING";
       readonly candidate: SessionCandidate;
@@ -219,11 +212,7 @@ export function analyzerReducer(
           proposed !== undefined &&
           action.discovery.players.some((player) => player.guid === proposed)
         ) {
-          return {
-            status: "recorder-confirmation",
-            ...context,
-            playerGuid: proposed,
-          };
+          return toSessionSelection(context, proposed);
         }
         return { status: "character-selection", ...context };
       }
@@ -236,20 +225,6 @@ export function analyzerReducer(
       }
       return state;
     }
-    case "recorder-confirmation":
-      if (action.type === "CONFIRM_RECORDER") {
-        return toSessionSelection(state, state.playerGuid);
-      }
-      if (action.type === "CHANGE_CHARACTER") {
-        return {
-          status: "character-selection",
-          file: state.file,
-          discovery: state.discovery,
-          discoveryWarnings: state.discoveryWarnings,
-          selectedPlayerGuid: state.playerGuid,
-        };
-      }
-      return state;
     case "character-selection":
       if (action.type === "SELECT_CHARACTER") {
         if (
@@ -269,16 +244,6 @@ export function analyzerReducer(
       }
       return state;
     case "session-selection":
-      if (action.type === "SELECT_SESSION") {
-        const valid = state.discovery.sessions.some(
-          (session) =>
-            session.id === action.sessionId &&
-            session.playerGuid === state.playerGuid,
-        );
-        return valid
-          ? { ...state, selectedSessionId: action.sessionId }
-          : state;
-      }
       if (action.type === "CHANGE_CHARACTER") {
         return {
           status: "character-selection",

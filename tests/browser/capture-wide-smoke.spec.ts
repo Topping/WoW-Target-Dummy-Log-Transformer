@@ -1,7 +1,5 @@
 import { test, expect } from "@playwright/test";
 
-import { reachSessionSelection, selectFirstSessionAndProcess } from "./helpers";
-
 test("large real capture keeps the main thread responsive and extraction stops early", async ({
   page,
 }, testInfo) => {
@@ -34,9 +32,7 @@ test("large real capture keeps the main thread responsive and extraction stops e
   await expect(page.getByRole("status")).toContainText(/percent/u);
 
   await expect(
-    page.getByRole("heading", {
-      name: "Is this the character that recorded the log?",
-    }),
+    page.getByRole("heading", { name: "Preparing encounter log" }),
   ).toBeVisible();
   const discoveryMeasurement = await page.evaluate(() => {
     const state = (
@@ -58,16 +54,21 @@ test("large real capture keeps the main thread responsive and extraction stops e
   expect(discoveryMeasurement.heartbeatCount).toBeGreaterThan(0);
   expect(discoveryMeasurement.maximumHeartbeatGapMs).toBeLessThan(500);
 
-  await reachSessionSelection(page);
   const extractionStartedAt = performance.now();
-  await selectFirstSessionAndProcess(page);
+  await expect(
+    page.getByRole("heading", { name: "Your encounter log is ready" }),
+  ).toBeVisible();
   const extractionWallMs = performance.now() - extractionStartedAt;
-  const sourceBytesRead = await page
-    .getByText("Source bytes read")
-    .locator("..")
-    .locator("dd")
+  await page.getByText("View attempt details", { exact: true }).click();
+  await page.getByText("Technical details", { exact: true }).click();
+  const technicalDetails = await page
+    .locator(".technical-panel pre")
     .textContent();
-  expect(sourceBytesRead).not.toBe("27.5 MB");
+  const sourceBytesRead = /"bytesRead":\s*(\d+)/u.exec(
+    technicalDetails ?? "",
+  )?.[1];
+  expect(sourceBytesRead).toBeDefined();
+  expect(Number(sourceBytesRead)).toBeLessThan(28_880_428);
 
   const measurement = {
     project: testInfo.project.name,

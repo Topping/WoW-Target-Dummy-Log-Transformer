@@ -47,14 +47,13 @@ function reachSessions(): Extract<
     discovery,
     warnings: [],
   });
-  state = analyzerReducer(state, { type: "CONFIRM_RECORDER" });
   if (state.status !== "session-selection")
     throw new Error("expected sessions");
   return state;
 }
 
 describe("analyzer UI state machine", () => {
-  it("covers discovery progress, recorder confirmation, character change, and session selection", () => {
+  it("proceeds directly from a proposed recorder to session selection", () => {
     let state = startDiscovery();
     state = analyzerReducer(state, {
       type: "DISCOVERY_PROGRESS",
@@ -69,7 +68,7 @@ describe("analyzer UI state machine", () => {
       warnings: [],
     });
     expect(state).toMatchObject({
-      status: "recorder-confirmation",
+      status: "session-selection",
       playerGuid: "Player-Recorder",
     });
     state = analyzerReducer(state, { type: "CHANGE_CHARACTER" });
@@ -119,10 +118,6 @@ describe("analyzer UI state machine", () => {
 
   it("processes a selected session, records export outcomes, and supports both back paths", () => {
     let state: AnalyzerState = reachSessions();
-    state = analyzerReducer(state, {
-      type: "SELECT_SESSION",
-      sessionId: candidate.id,
-    });
     state = analyzerReducer(state, {
       type: "START_PROCESSING",
       candidate,

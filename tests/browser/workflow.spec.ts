@@ -3,15 +3,14 @@ import { readFile } from "node:fs/promises";
 import { test, expect } from "@playwright/test";
 
 import {
+  expectAutomaticResult,
   expectFocusedHeading,
   expectNoAccessibilityViolations,
-  reachSessionSelection,
-  selectFirstSessionAndProcess,
 } from "./helpers";
 
 const CLEAVE_CAPTURE = "data/cleave-logs.txt";
 
-test("real five-target file-to-both-exports workflow is accessible and local-only", async ({
+test("real five-target encounter-log workflow is accessible and local-only", async ({
   page,
 }, testInfo) => {
   const requestsAfterIntake: {
@@ -24,10 +23,11 @@ test("real five-target file-to-both-exports workflow is accessible and local-onl
   const analyzerUrl = page.url();
   const analyzerBase = new URL(".", analyzerUrl);
   await expectNoAccessibilityViolations(page, "waiting for file");
+  await expect(page.getByText("Browser only", { exact: true })).toHaveCount(0);
 
   const chooserPromise = page.waitForEvent("filechooser");
   const chooseButton = page.getByRole("button", {
-    name: "Choose a combat log",
+    name: "Choose combat log",
   });
   await chooseButton.focus();
   await page.keyboard.press("Enter");
@@ -41,54 +41,26 @@ test("real five-target file-to-both-exports workflow is accessible and local-onl
   });
   await chooser.setFiles(CLEAVE_CAPTURE);
 
+  await expectAutomaticResult(page);
+  await expectFocusedHeading(page, /Your encounter log is ready/u);
+  await expect(page.locator(".result-meta")).toContainText("5 targets");
   await expect(
-    page.getByRole("heading", {
-      name: "Is this the character that recorded the log?",
-    }),
+    page.getByRole("button", { name: "Download encounter log" }),
   ).toBeVisible();
-  await expectFocusedHeading(
-    page,
-    /Is this the character that recorded the log/u,
-  );
-  await expectNoAccessibilityViolations(page, "recorder confirmation");
-
-  await reachSessionSelection(page);
-  await expect(page.getByText("5 targets", { exact: true })).toBeVisible();
-  await expectNoAccessibilityViolations(page, "session selection");
-
-  await selectFirstSessionAndProcess(page);
-  await expectFocusedHeading(page, /Your clean training session/u);
   await expect(
-    page.getByRole("heading", { name: "All 5 targets" }),
-  ).toBeVisible();
-  await expect(page.getByText("Target 5:", { exact: false })).toBeVisible();
-  await page.getByText("Technical and debug details", { exact: true }).click();
+    page.getByText("Export session JSON", { exact: true }),
+  ).toHaveCount(0);
+  await page.getByText("View attempt details", { exact: true }).click();
+  await expect(page.getByRole("heading", { name: "5 targets" })).toBeVisible();
+  await page.getByText("Technical details", { exact: true }).click();
   await expect(page.getByText(/parserVersion/u)).toBeVisible();
   await expectNoAccessibilityViolations(page, "processed result");
 
-  const jsonDownloadPromise = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Export session JSON" }).click();
-  const jsonDownload = await jsonDownloadPromise;
-  expect(jsonDownload.suggestedFilename()).toMatch(/\.session\.json$/u);
-  const jsonDownloadPath = await jsonDownload.path();
-  const downloadedJson = JSON.parse(
-    await readFile(jsonDownloadPath, "utf8"),
-  ) as { readonly format?: unknown; readonly version?: unknown };
-  expect(downloadedJson).toMatchObject({
-    format: "wow-training-dummy-session",
-    version: 1,
-  });
-  await expect(page.locator(".export-feedback[role='status']")).toContainText(
-    "is ready in your downloads",
-  );
-
   const logDownloadPromise = page.waitForEvent("download");
-  await page
-    .getByRole("button", { name: "Export encounter combat log" })
-    .click();
+  await page.getByRole("button", { name: "Download encounter log" }).click();
   const logDownload = await logDownloadPromise;
   expect(logDownload.suggestedFilename()).toMatch(
-    /\.session\.encounter\.log$/u,
+    /\.session\.encounter\.txt$/u,
   );
   const logDownloadPath = await logDownload.path();
   const downloadedLog = await readFile(logDownloadPath, "utf8");
@@ -112,8 +84,9 @@ test("real five-target file-to-both-exports workflow is accessible and local-onl
     /ENCOUNTER_END,610,"Razorgore the Untamed",9,40,0,/u,
   );
   await expect(page.locator(".export-feedback[role='status']")).toContainText(
-    "verified Blackwing Lair/Razorgore template",
+    "verified Blackwing Lair/Razorgore compatibility template",
   );
+  await expect(page.getByText(/WowCoach/u)).toHaveCount(0);
 
   expect(requestsAfterIntake.length).toBeGreaterThan(0);
   expect(requestsAfterIntake.every((request) => request.method === "GET")).toBe(
@@ -174,6 +147,18 @@ test("real five-target file-to-both-exports workflow is accessible and local-onl
     indexedDatabases: 0,
     serviceWorkers: 0,
   });
+
+  await page
+    .getByRole("button", { name: "Choose a different attempt" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Choose an attempt" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Use this attempt" }).first(),
+  ).toBeVisible();
+  await expect(page.getByRole("radio")).toHaveCount(0);
+  await expectNoAccessibilityViolations(page, "attempt selection");
 
   testInfo.annotations.push({
     type: "browser-version",

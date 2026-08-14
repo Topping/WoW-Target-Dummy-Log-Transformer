@@ -144,7 +144,9 @@ Core export code produces deterministic strings only. Session JSON format v1
 has a committed schema and decimal-string bigint encoding; filtered log output
 concatenates each retained raw line with its exact source terminator. Browser
 transport creates Blobs and assigns deterministic safe filenames. Neither path
-uses network requests, storage, cookies, or a backend.
+uses network requests, storage, cookies, or a backend. The JSON capability
+remains available to core and transport consumers, but the public converter UI
+exposes only the encounter-log download.
 
 ## ADR-005: Reducer-driven local workflow and ephemeral downloads
 
@@ -153,27 +155,45 @@ uses network requests, storage, cookies, or a backend.
 **Date:** 2026-08-14
 
 The React workflow is a discriminated-union reducer covering waiting,
-discovery, recorder confirmation, explicit character selection, session
-selection, detailed processing, result, recoverable error, and cancellation.
+discovery, explicit character selection when needed, session selection,
+processing, result, recoverable error, and cancellation.
 Side effects remain in a thin application coordinator around
 `ParserWorkerClient`; presentation components receive domain results and never
 reimplement discovery, extraction, filtering, or serialization.
 
+A valid unique recorder proposal proceeds directly to session selection. The
+full character list is shown only when discovery cannot identify the recorder
+unambiguously, and remains reachable through **Change character**. The
+coordinator automatically processes exactly one Likely attempt; ambiguous
+attempt sets use direct **Use this attempt** actions instead of a selection plus
+confirmation pair.
+
 The UI adds its own monotonically increasing operation token to each worker
 promise. The reducer ignores progress or terminal actions whose token does not
-match the currently active state. This preserves coherent replacement, retry,
+match the currently active state. This preserves coherent start-over, retry,
 and cancellation behavior even before the worker client's independent stale
 response filter is considered.
 
-Normal labels never expose GUIDs. Exact times and durations are formatted from
-the existing raw timestamp and bigint tick contracts. Technical identifiers,
-schema metadata, warnings, and optional debug decisions live inside a closed
-technical disclosure.
+The interface is positioned as a converter and keeps the common path to file
+choice followed by encounter-log download. Progress copy is concise while exact
+byte values remain available through the native progress element. Normal labels
+never expose GUIDs. Exact times and durations are formatted from the existing
+raw timestamp and bigint tick contracts. The result leads with the download and
+essential character/duration/target context; attempt details and technical
+identifiers, schema metadata, warnings, and optional debug decisions live inside
+closed disclosures.
+
+Local-processing trust copy appears once on the landing intake. It is removed
+with the marketing hero after file selection. There is no standalone product
+header or “Browser only” badge. These are presentation decisions only: the no-network
+architecture and privacy audits remain unchanged.
 
 `saveSessionDownload` is the DOM completion of D07's
 `createSessionDownload`: it uses a temporary anchor and object URL, removes the
 anchor, and revokes the URL in `finally`. Export serialization and deterministic
 filename generation remain in the existing core/browser transport contracts.
+The public UI invokes this path only for `encounter-log`; JSON remains an
+internal core capability.
 The complete UI behavior is documented in [`ui-workflow.md`](ui-workflow.md).
 
 ## ADR-006: Measured safety budgets and production browser hardening
@@ -225,8 +245,8 @@ entering the deployment artifact.
 
 The Pages workflow validates the local repository-scoped artifact in Playwright
 Chromium, Firefox, and WebKit proxies before deployment, then repeats the direct
-load and complete real-cleave file-to-both-exports smoke against the URL returned
-by GitHub after deployment. Those are still proxy-engine results, not actual
+load and complete real-cleave file-to-encounter-export smoke against the URL
+returned by GitHub after deployment. Those are still proxy-engine results, not actual
 Edge, installed Firefox, or installed Safari certification. The workflow adds
 no router, backend, persistence, analytics, PWA, or service worker.
 

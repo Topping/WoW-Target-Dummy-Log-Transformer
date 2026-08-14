@@ -2,9 +2,9 @@ import { test, expect } from "@playwright/test";
 
 import {
   VERSION_LINE,
+  expectAttemptSelection,
   expectFocusedHeading,
   expectNoAccessibilityViolations,
-  reachSessionSelection,
 } from "./helpers";
 
 const DAMAGE_A =
@@ -27,7 +27,7 @@ test("explicit character selection and no-session recovery remain usable", async
 
   await expect(
     page.getByRole("heading", {
-      name: "Which character do you want to analyze?",
+      name: "Choose your character",
     }),
   ).toBeVisible();
   await expect(
@@ -37,11 +37,9 @@ test("explicit character selection and no-session recovery remain usable", async
     page.getByRole("radio", { name: "Second Character" }),
   ).toBeVisible();
   await page.getByRole("radio", { name: "First Character" }).check();
-  await page.getByRole("button", { name: "Continue to sessions" }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await expect(
-    page.getByRole("heading", {
-      name: "Training sessions for First Character",
-    }),
+    page.getByRole("heading", { name: "Choose an attempt" }),
   ).toBeVisible();
 
   await input.setInputFiles({
@@ -49,7 +47,7 @@ test("explicit character selection and no-session recovery remain usable", async
     mimeType: "text/plain",
     buffer: Buffer.from([VERSION_LINE, SELF_BUFF].join("\n")),
   });
-  await reachSessionSelection(page);
+  await expectAttemptSelection(page);
   await expect(
     page.getByRole("heading", {
       name: "No training sessions found for this character",
@@ -60,7 +58,7 @@ test("explicit character selection and no-session recovery remain usable", async
   ).toBeVisible();
 });
 
-test("retry and replacement-file recovery remain usable", async ({ page }) => {
+test("retry and start-over recovery remain usable", async ({ page }) => {
   await page.goto("./");
   const input = page.locator('input[type="file"]');
 
@@ -83,15 +81,19 @@ test("retry and replacement-file recovery remain usable", async ({ page }) => {
     }),
   ).toBeVisible();
 
+  await page.getByRole("button", { name: "Start over" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Choose your combat log" }),
+  ).toBeVisible();
   await input.setInputFiles("data/cleave-logs.txt");
   await expect(
     page.getByRole("heading", {
-      name: "Is this the character that recorded the log?",
+      name: /Preparing encounter log|Your encounter log is ready/u,
     }),
   ).toBeVisible();
 });
 
-test("large-capture cancellation suppresses stale completion and permits replacement", async ({
+test("large-capture cancellation suppresses stale completion and permits start over", async ({
   page,
 }, testInfo) => {
   test.skip(
@@ -111,35 +113,24 @@ test("large-capture cancellation suppresses stale completion and permits replace
     page.getByRole("heading", { name: "File scanning was cancelled" }),
   ).toBeVisible();
 
-  await input.setInputFiles("data/cleave-logs.txt");
-  await expect(
-    page.getByRole("heading", {
-      name: "Is this the character that recorded the log?",
-    }),
-  ).toBeVisible();
-  await page.waitForTimeout(250);
-  await expect(
-    page.getByRole("heading", { name: "File scanning was cancelled" }),
-  ).toHaveCount(0);
-
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  const session = page
-    .getByRole("radio", { name: /training attempt/u })
-    .first();
-  await session.check();
-  await page
-    .getByRole("button", { name: "Process selected attempt" })
-    .evaluate((button: HTMLButtonElement) => {
-      button.click();
+  await page.evaluate(() => {
+    const observer = new MutationObserver(() => {
+      const cancelProcessing = [...document.querySelectorAll("button")].find(
+        (button) => button.textContent.trim() === "Cancel processing",
+      );
+      if (cancelProcessing instanceof HTMLButtonElement) {
+        observer.disconnect();
+        cancelProcessing.click();
+      }
     });
-  const cancelProcessing = page.getByRole("button", {
-    name: "Cancel processing",
+    observer.observe(document.body, { childList: true, subtree: true });
   });
-  await cancelProcessing.waitFor({ state: "attached" });
-  await cancelProcessing.evaluate((button: HTMLButtonElement) => {
-    button.click();
-  });
+  await page.getByRole("button", { name: "Start over" }).click();
+  await input.setInputFiles("data/dummy-encounter.txt");
   await expect(
     page.getByRole("heading", { name: "Session processing was cancelled" }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "File scanning was cancelled" }),
+  ).toHaveCount(0);
 });

@@ -26,7 +26,7 @@ import type {
   SavedSessionDownload,
 } from "../src/worker";
 import { saveSessionDownload } from "../src/worker";
-import { makeDiscovery, makeSession } from "./ui-fixtures";
+import { makeCandidate, makeDiscovery, makeSession } from "./ui-fixtures";
 
 interface PendingOperation<T> {
   readonly options: {
@@ -110,7 +110,7 @@ async function uploadFile(
   await user.upload(input, value);
 }
 
-async function reachSessionSelection(
+async function reachProcessing(
   user: ReturnType<typeof userEvent.setup>,
   client: FakeAnalyzerClient,
   discovery = makeDiscovery(),
@@ -118,11 +118,7 @@ async function reachSessionSelection(
   await uploadFile(user);
   client.discoveries[0]?.resolve(success(discovery));
   await screen.findByRole("heading", {
-    name: "Is this the character that recorded the log?",
-  });
-  await user.click(screen.getByRole("button", { name: "Continue" }));
-  await screen.findByRole("heading", {
-    name: /Training sessions for Pølsefatter/u,
+    name: "Preparing encounter log",
   });
 }
 
@@ -130,15 +126,9 @@ async function reachResult(
   user: ReturnType<typeof userEvent.setup>,
   client: FakeAnalyzerClient,
 ): Promise<void> {
-  await reachSessionSelection(user, client);
-  await user.click(
-    screen.getByRole("radio", { name: /Likely training attempt/u }),
-  );
-  await user.click(
-    screen.getByRole("button", { name: "Process selected attempt" }),
-  );
+  await reachProcessing(user, client);
   client.processes[0]?.resolve(success(makeSession()));
-  await screen.findByRole("heading", { name: "Your clean training session" });
+  await screen.findByRole("heading", { name: "Your encounter log is ready" });
 }
 
 afterEach(() => {
@@ -155,26 +145,47 @@ describe("browser-oriented D08-D09 workflow", () => {
       .mockImplementation(() => undefined);
     const { unmount } = render(<App createWorkerClient={() => client} />);
 
-    const choose = screen.getByRole("button", { name: "Choose a combat log" });
+    expect(screen.getByRole("heading", { name: "How to use it" })).toBeTruthy();
+    const choose = screen.getByRole("button", { name: "Choose combat log" });
     choose.focus();
     await user.keyboard("{Enter}");
     expect(inputClick).toHaveBeenCalledOnce();
 
     const dropZone = screen.getByText(
-      "Drop your WoW combat log here",
+      /Drop WoWCombatLog\.txt here/u,
     ).parentElement;
     if (dropZone === null) throw new Error("drop zone not found");
     fireEvent.drop(dropZone, {
       dataTransfer: { files: [file("not-a-log.bin")] },
     });
-    expect(await screen.findAllByText(/not-a-log\.bin/u)).toHaveLength(2);
+    expect(await screen.findAllByText(/not-a-log\.bin/u)).toHaveLength(1);
+    expect(screen.queryByRole("heading", { name: "How to use it" })).toBeNull();
     expect(client.discoveries).toHaveLength(1);
 
     unmount();
     expect(client.disposed).toBe(true);
   });
 
-  it("runs file → discovery → recorder confirmation → grouped five-target session → processing → summary → exports", async () => {
+  it("starts over to the drop area and cancels active work", async () => {
+    const user = userEvent.setup();
+    const client = new FakeAnalyzerClient();
+    render(<App createWorkerClient={() => client} />);
+
+    await uploadFile(user);
+    await screen.findByRole("heading", { name: "Scanning combat log" });
+    expect(
+      screen.queryByRole("button", { name: "Choose another file" }),
+    ).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Start over" }));
+
+    expect(client.cancelCount).toBe(1);
+    expect(
+      screen.getByRole("heading", { name: "Choose your combat log" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "How to use it" })).toBeTruthy();
+  });
+
+  it("runs the common file → automatic attempt → encounter export path", async () => {
     const user = userEvent.setup();
     const client = new FakeAnalyzerClient();
     const download = vi.fn(
@@ -182,23 +193,12 @@ describe("browser-oriented D08-D09 workflow", () => {
         _session: Session,
         kind: "json" | "encounter-log",
       ): OperationResult<SavedSessionDownload> =>
-        success(
-          {
-            filename:
-              kind === "json"
-                ? "character.session.json"
-                : "character.session.encounter.log",
-          },
-          kind === "json"
-            ? [
-                {
-                  code: "EXPORT_SOFT_BYTE_LIMIT_EXCEEDED",
-                  severity: "warning",
-                  message: "The export is large but complete.",
-                },
-              ]
-            : [],
-        ),
+        success({
+          filename:
+            kind === "json"
+              ? "character.session.json"
+              : "character.session.encounter.txt",
+        }),
     );
     render(
       <App createWorkerClient={() => client} downloadSession={download} />,
@@ -208,63 +208,48 @@ describe("browser-oriented D08-D09 workflow", () => {
     client.discoveries[0]?.options.onProgress?.(
       progress("scanning-actors", 68),
     );
-    expect(await screen.findByText("68 B of 100 B read · 68%")).toBeTruthy();
+    expect(await screen.findByText("68%", { selector: "p" })).toBeTruthy();
     client.discoveries[0]?.resolve(success(makeDiscovery()));
 
-    const recorderHeading = await screen.findByRole("heading", {
-      name: "Is this the character that recorded the log?",
+    const processingHeading = await screen.findByRole("heading", {
+      name: "Preparing encounter log",
     });
-    expect(document.activeElement).toBe(recorderHeading);
-    expect(screen.getByText("Pølsefatter-ArgentDawn-EU")).toBeTruthy();
+    expect(document.activeElement).toBe(processingHeading);
+    expect(client.processes).toHaveLength(1);
     expect(document.body.textContent).not.toContain("Player-Recorder");
-    await user.click(screen.getByRole("button", { name: "Continue" }));
-
-    expect(
-      await screen.findByRole("heading", { name: "Likely attempts" }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("heading", { name: "Other possible sessions" }),
-    ).toBeTruthy();
-    expect(screen.getAllByText(/Target [1-5]:/u)).toHaveLength(5);
-    const advanced = screen
-      .getByText("Advanced: incidental interactions")
-      .closest("details");
-    expect(advanced).toHaveProperty("open", false);
-    await user.click(
-      screen.getByRole("radio", { name: /Likely training attempt/u }),
-    );
-    await user.click(
-      screen.getByRole("button", { name: "Process selected attempt" }),
-    );
     expect(client.selections[0]?.targetGuids).toHaveLength(5);
     client.processes[0]?.options.onProgress?.(progress("filtering-events", 80));
-    expect(
-      await screen.findByText("Resolving pets and removing nearby activity"),
-    ).toBeTruthy();
+    expect(await screen.findByText("80%", { selector: "p" })).toBeTruthy();
     client.processes[0]?.resolve(success(makeSession()));
 
-    await screen.findByRole("heading", { name: "Your clean training session" });
-    expect(screen.getByText("All 5 targets")).toBeTruthy();
-    expect(screen.getAllByText("42")).toHaveLength(2);
-    expect(screen.getByText("Risen Ghoul")).toBeTruthy();
+    await screen.findByRole("heading", { name: "Your encounter log is ready" });
+    expect(screen.getByText("1m 27.413s · 5 targets")).toBeTruthy();
     expect(
       screen.getByText("This complete session is unusually large."),
     ).toBeTruthy();
-    expect(screen.getByText("Filtering audit")).toBeTruthy();
+    const details = screen.getByText("View attempt details").closest("details");
+    expect(details).toHaveProperty("open", false);
+    expect(
+      screen.queryByRole("button", { name: "Export session JSON" }),
+    ).toBeNull();
 
-    await user.click(
-      screen.getByRole("button", { name: "Export session JSON" }),
-    );
+    const downloadButton = screen.getByRole("button", {
+      name: "Download encounter log",
+    });
     expect(
-      await screen.findByText("The export is large but complete."),
+      downloadButton.compareDocumentPosition(details as Node) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
-    await user.click(
-      screen.getByRole("button", { name: "Export encounter combat log" }),
-    );
-    expect(download).toHaveBeenCalledTimes(2);
+    await user.click(downloadButton);
+    expect(download).toHaveBeenCalledOnce();
+    expect(download).toHaveBeenCalledWith(expect.anything(), "encounter-log");
     expect(
-      await screen.findByText(/character\.session\.encounter\.log is ready/u),
+      await screen.findByText(/character\.session\.encounter\.txt is ready/u),
     ).toBeTruthy();
+
+    await user.click(screen.getByText("View attempt details"));
+    expect(screen.getByText("Risen Ghoul")).toBeTruthy();
+    expect(screen.getByText("Technical details")).toBeTruthy();
   });
 
   it("requires explicit choice when no unique recorder exists and shows every character", async () => {
@@ -275,7 +260,7 @@ describe("browser-oriented D08-D09 workflow", () => {
     client.discoveries[0]?.resolve(success(makeDiscovery(null)));
 
     await screen.findByRole("heading", {
-      name: "Which character do you want to analyze?",
+      name: "Choose your character",
     });
     expect(
       screen.getByRole("radio", { name: "Pølsefatter-ArgentDawn-EU" }),
@@ -283,18 +268,17 @@ describe("browser-oriented D08-D09 workflow", () => {
     expect(
       screen.getByRole("radio", { name: "Nearby-MoonGuard-US" }),
     ).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: "Continue to sessions" }),
-    ).toHaveProperty("disabled", true);
+    expect(screen.getByRole("button", { name: "Continue" })).toHaveProperty(
+      "disabled",
+      true,
+    );
     await user.click(
       screen.getByRole("radio", { name: "Nearby-MoonGuard-US" }),
     );
-    await user.click(
-      screen.getByRole("button", { name: "Continue to sessions" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Continue" }));
     expect(
       await screen.findByRole("heading", {
-        name: "Training sessions for Nearby-MoonGuard-US",
+        name: "Choose an attempt",
       }),
     ).toBeTruthy();
   });
@@ -315,10 +299,41 @@ describe("browser-oriented D08-D09 workflow", () => {
     client.discoveries[0]?.resolve(success(multiple));
     expect(
       await screen.findByRole("heading", {
-        name: "Which character do you want to analyze?",
+        name: "Choose your character",
       }),
     ).toBeTruthy();
     expect(screen.getAllByRole("radio")).toHaveLength(2);
+  });
+
+  it("uses direct actions when more than one likely attempt needs a choice", async () => {
+    const user = userEvent.setup();
+    const client = new FakeAnalyzerClient();
+    const discovery = makeDiscovery();
+    render(<App createWorkerClient={() => client} />);
+    await uploadFile(user);
+    client.discoveries[0]?.resolve(
+      success({
+        ...discovery,
+        sessions: [
+          discovery.sessions[0] ?? makeCandidate("first"),
+          makeCandidate("second-likely"),
+          ...discovery.sessions.slice(1),
+        ],
+      }),
+    );
+
+    await screen.findByRole("heading", { name: "Choose an attempt" });
+    expect(screen.queryByRole("radio")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Process selected attempt" }),
+    ).toBeNull();
+    const actions = screen.getAllByRole("button", { name: "Use this attempt" });
+    expect(actions.length).toBeGreaterThanOrEqual(2);
+    const secondAction = actions[1];
+    if (secondAction === undefined) throw new Error("missing second attempt");
+    await user.click(secondAction);
+    expect(client.selections[0]?.id).toBe("second-likely");
+    await screen.findByRole("heading", { name: "Preparing encounter log" });
   });
 
   it.each([
@@ -350,7 +365,7 @@ describe("browser-oriented D08-D09 workflow", () => {
           code: "TEST_RECOVERY",
           message,
           recoverable: true,
-          suggestedAction: "Choose another file or try again.",
+          suggestedAction: "Start over with another file or try again.",
         }),
       );
       expect(
@@ -360,9 +375,7 @@ describe("browser-oriented D08-D09 workflow", () => {
       expect(
         screen.getByRole("button", { name: "Try this file again" }),
       ).toBeTruthy();
-      expect(
-        screen.getByRole("button", { name: "Choose another file" }),
-      ).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Start over" })).toBeTruthy();
     },
   );
 
@@ -393,7 +406,6 @@ describe("browser-oriented D08-D09 workflow", () => {
     client.discoveries[1]?.resolve(
       success({ ...makeDiscovery(), sessions: [] }),
     );
-    await user.click(await screen.findByRole("button", { name: "Continue" }));
     expect(
       await screen.findByRole("heading", {
         name: "No training sessions found for this character",
@@ -413,38 +425,34 @@ describe("browser-oriented D08-D09 workflow", () => {
     expect(await screen.findByText("File scanning was cancelled")).toBeTruthy();
     client.discoveries[0]?.resolve(success(makeDiscovery()));
     await waitFor(() => {
-      expect(
-        screen.queryByText("Is this the character that recorded the log?"),
-      ).toBeNull();
+      expect(screen.queryByText("Preparing encounter log")).toBeNull();
     });
 
     await user.click(
       screen.getByRole("button", { name: "Scan this file again" }),
     );
     client.discoveries[1]?.resolve(success(makeDiscovery()));
-    await user.click(await screen.findByRole("button", { name: "Continue" }));
-    await user.click(
-      screen.getByRole("radio", { name: /Likely training attempt/u }),
-    );
-    await user.click(
-      screen.getByRole("button", { name: "Process selected attempt" }),
-    );
+    await screen.findByRole("heading", { name: "Preparing encounter log" });
     await user.click(screen.getByRole("button", { name: "Cancel processing" }));
     expect(
       await screen.findByText("Session processing was cancelled"),
     ).toBeTruthy();
     client.processes[0]?.resolve(success(makeSession()));
-    expect(screen.queryByText("Your clean training session")).toBeNull();
+    expect(screen.queryByText("Your encounter log is ready")).toBeNull();
     await user.click(screen.getByRole("button", { name: "Back to sessions" }));
     expect(await screen.findByText(/Processing was cancelled/u)).toBeTruthy();
 
+    await user.click(screen.getByRole("button", { name: "Start over" }));
+    const dropZone = screen.getByText(
+      /Drop WoWCombatLog\.txt here/u,
+    ).parentElement;
+    if (dropZone === null) throw new Error("drop zone not found");
     const replacementFile = file("replacement-file.weird");
-    await user.upload(
-      screen.getByLabelText("Choose a WoW combat log file"),
-      replacementFile,
-    );
+    fireEvent.drop(dropZone, {
+      dataTransfer: { files: [replacementFile] },
+    });
     expect(await screen.findAllByText(/replacement-file\.weird/u)).toHaveLength(
-      2,
+      1,
     );
     expect(client.discoveries).toHaveLength(3);
   });
@@ -465,13 +473,7 @@ describe("browser-oriented D08-D09 workflow", () => {
     render(
       <App createWorkerClient={() => client} downloadSession={download} />,
     );
-    await reachSessionSelection(user, client);
-    await user.click(
-      screen.getByRole("radio", { name: /Likely training attempt/u }),
-    );
-    await user.click(
-      screen.getByRole("button", { name: "Process selected attempt" }),
-    );
+    await reachProcessing(user, client);
     client.processes[0]?.resolve(
       failure({
         category: "session-too-large",
@@ -488,9 +490,9 @@ describe("browser-oriented D08-D09 workflow", () => {
     ).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Retry processing" }));
     client.processes[1]?.resolve(success(makeSession()));
-    await screen.findByRole("heading", { name: "Your clean training session" });
+    await screen.findByRole("heading", { name: "Your encounter log is ready" });
     await user.click(
-      screen.getByRole("button", { name: "Export session JSON" }),
+      screen.getByRole("button", { name: "Download encounter log" }),
     );
     expect((await screen.findByRole("alert")).textContent).toContain(
       "The generated export exceeds the configured hard byte limit.",
@@ -516,16 +518,20 @@ describe("browser-oriented D08-D09 workflow", () => {
     expect(document.querySelector("a[download]")).toBeNull();
   });
 
-  it("can return from a result and choose another file", async () => {
+  it("can start over from a result and drop another file", async () => {
     const user = userEvent.setup();
     const client = new FakeAnalyzerClient();
     render(<App createWorkerClient={() => client} />);
     await reachResult(user, client);
-    await user.upload(
-      screen.getByLabelText("Choose a WoW combat log file"),
-      file("another-capture.txt"),
-    );
-    expect(await screen.findAllByText(/another-capture\.txt/u)).toHaveLength(2);
+    await user.click(screen.getByRole("button", { name: "Start over" }));
+    const dropZone = screen.getByText(
+      /Drop WoWCombatLog\.txt here/u,
+    ).parentElement;
+    if (dropZone === null) throw new Error("drop zone not found");
+    fireEvent.drop(dropZone, {
+      dataTransfer: { files: [file("another-capture.txt")] },
+    });
+    expect(await screen.findAllByText(/another-capture\.txt/u)).toHaveLength(1);
     expect(client.discoveries).toHaveLength(2);
   });
 
@@ -533,13 +539,7 @@ describe("browser-oriented D08-D09 workflow", () => {
     const user = userEvent.setup();
     const client = new FakeAnalyzerClient();
     render(<App createWorkerClient={() => client} />);
-    await reachSessionSelection(user, client);
-    await user.click(
-      screen.getByRole("radio", { name: /Likely training attempt/u }),
-    );
-    await user.click(
-      screen.getByRole("button", { name: "Process selected attempt" }),
-    );
+    await reachProcessing(user, client);
     const base = makeSession();
     const target = base.targets[0];
     const statistics = base.statistics.targets[0];
@@ -551,23 +551,22 @@ describe("browser-oriented D08-D09 workflow", () => {
         statistics: { ...base.statistics, targets: [statistics] },
       }),
     );
+    await user.click(await screen.findByText("View attempt details"));
     expect(
-      await screen.findByText("Focus target: Cleave Training Dummy"),
+      await screen.findByText("Focus: Cleave Training Dummy"),
     ).toBeTruthy();
     await user.click(
-      screen.getByRole("button", { name: "Select another session" }),
+      screen.getByRole("button", { name: "Choose a different attempt" }),
     );
     expect(
       await screen.findByRole("heading", {
-        name: /Training sessions for Pølsefatter/u,
+        name: "Choose an attempt",
       }),
     ).toBeTruthy();
-    await user.click(
-      screen.getByRole("button", { name: "Choose another character" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Change character" }));
     expect(
       await screen.findByRole("heading", {
-        name: "Which character do you want to analyze?",
+        name: "Choose your character",
       }),
     ).toBeTruthy();
   });

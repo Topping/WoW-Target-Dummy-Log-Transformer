@@ -27,25 +27,19 @@ export async function expectFocusedHeading(
   await expect(heading).toBeFocused();
 }
 
-export async function reachSessionSelection(page: Page): Promise<void> {
+export async function expectAttemptSelection(page: Page): Promise<void> {
   await expect(
-    page.getByRole("heading", {
-      name: "Is this the character that recorded the log?",
-    }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: /Training sessions for/u }),
+    page.getByRole("heading", { name: "Choose an attempt" }),
   ).toBeVisible();
 }
 
-export async function selectFirstSessionAndProcess(page: Page): Promise<void> {
-  const session = page
-    .getByRole("radio", { name: /training attempt/u })
-    .first();
-  await session.check();
-  await page.getByRole("button", { name: "Process selected attempt" }).click();
+export async function useFirstAttempt(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Use this attempt" }).first().click();
+  await expectAutomaticResult(page);
+}
+
+export async function expectAutomaticResult(page: Page): Promise<void> {
   await expect(
-    page.getByRole("heading", { name: "Your clean training session" }),
+    page.getByRole("heading", { name: "Your encounter log is ready" }),
   ).toBeVisible();
 }

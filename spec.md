@@ -277,6 +277,12 @@ The UI should operate as a small state machine.
 │   Processed locally in browser     │
 │                                    │
 └────────────────────────────────────┘
+
+How to use it
+1. Upload the target dummy combat log.
+2. Download the transformed .txt file.
+3. Upload it to Warcraft Logs with the Archon desktop client.
+4. Use the Warcraft Logs link in an encounter analysis tool.
 ```
 
 Accepted file:
@@ -299,13 +305,6 @@ Example:
 Scanning combat log...
 
 ████████████████░░░░░░  68%
-
-347 MB processed
-
-Finding:
-• characters
-• targets
-• training attempts
 ```
 
 The UI must remain responsive.
@@ -316,20 +315,13 @@ The file scan must therefore run in a Web Worker.
 
 ## State 3 — character selection
 
-If one likely player is found:
-
-```text
-Character detected
-
-Pølsefatter-ArgentDawn-EU
-
-[Continue]
-```
+If one likely player is found, use it automatically. Do not add a confirmation
+step merely to repeat a confident detection.
 
 If multiple players appear:
 
 ```text
-Which character do you want to analyze?
+Choose your character
 
 ○ Pølsefatter-ArgentDawn-EU
 ○ Examplemage-ArgentDawn-EU
@@ -342,27 +334,22 @@ Do not expose GUIDs unless advanced/debug mode is enabled.
 
 ## State 4 — target/session selection
 
-Display detected candidate attempts.
+When exactly one likely attempt is found, begin detailed processing
+automatically. When several attempts need a decision, display concise candidate
+actions.
 
 Example:
 
 ```text
-Training sessions
+Choose an attempt
 
-● 11:47:30 → 11:52:32
-  5m 02s
-  Training Dummy
-  184.3M damage
+Recommended attempt                       5m 02s
+11:47:30 · Training Dummy
+[Use this attempt]
 
-○ 11:31:20 → 11:34:22
-  3m 02s
-  Training Dummy
-  103.7M damage
-
-○ 12:04:11 → 12:05:13
-  1m 02s
-  Training Dummy
-  31.2M damage
+Possible attempt                          3m 02s
+11:31:20 · Training Dummy
+[Use this attempt]
 ```
 
 Where possible, the user should select a **session**, not independently configure a target GUID and time range.
@@ -373,46 +360,32 @@ Advanced overrides may be available later.
 
 ## State 5 — detailed processing
 
-Once the user selects a session, perform the second pass.
+Once a session is chosen automatically or explicitly, perform the second pass.
 
 Example:
 
 ```text
-Processing selected attempt...
+Preparing encounter log...
 
-Reading relevant events
-Resolving pets and summons
-Filtering nearby players
-Building session timeline
+████████████████░░░░░░  68%
 ```
 
 ---
 
 ## State 6 — result
 
-Initial v0.2 result:
+The result leads with the primary product action. Diagnostic information remains
+available in a closed disclosure.
 
 ```text
+Your encounter log is ready
+
 Pølsefatter-ArgentDawn-EU
+5m 02s · Training Dummy
 
-Training Dummy
-11:47:30 → 11:52:32
-Duration: 5m 02s
+[Download encounter log]
 
-Relevant combat events: 8,421
-Unrelated events removed: 120,489
-Pets / guardians detected: 3
-External buffs detected: 1
-Unknown event types: 0
-
-[Export JSON]
-[Export encounter combat log]
-```
-
-Synthetic encounter export should initially live behind:
-
-```text
-Advanced / Experimental
+View attempt details ▸
 ```
 
 ---
@@ -1232,9 +1205,9 @@ This—not a rewritten WoW log—should be the canonical representation.
 
 ---
 
-# 37. JSON export
+# 37. Internal JSON export
 
-Users should be able to export:
+The core should be able to serialize:
 
 ```text
 session.json
@@ -1267,16 +1240,17 @@ Example:
 }
 ```
 
-This format should later serve as the input to rotation analysis.
+This format should later serve as the input to rotation analysis. It is an
+internal/core capability and is not exposed as a normal user-facing download.
 
 ---
 
 # 38. Filtered raw-log export
 
-Users should also be able to export:
+The primary user-facing export is:
 
 ```text
-session.encounter.log
+session.encounter.txt
 ```
 
 This should preserve relevant original lines in original chronological order.
@@ -1310,7 +1284,7 @@ No exported file needs to pass through a backend.
 The primary text export generates:
 
 ```text
-session.encounter.log
+session.encounter.txt
 ```
 
 containing the verified compatibility envelope.
@@ -1781,7 +1755,7 @@ drop valid log
 ```text
 drop unrelated text file
 → clear error
-→ user can choose another file
+→ user can start over and drop another file
 ```
 
 ---
@@ -2176,8 +2150,8 @@ The parser must therefore preserve enough event information to support these lat
 - [ ] External effects on the player are identified.
 - [ ] Unknown event types do not crash processing.
 - [ ] Unicode names parse correctly.
-- [ ] Normalized JSON can be exported.
-- [ ] Filtered raw log can be exported.
+- [ ] Normalized JSON can be serialized by the core.
+- [ ] An encounter-format combat log can be downloaded from the primary UI.
 - [ ] No source combat data is uploaded.
 - [ ] Application can be hosted on GitHub Pages.
 - [ ] Core parser has automated tests independent of the UI.

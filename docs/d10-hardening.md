@@ -99,10 +99,12 @@ silently truncated.
 
 ## Browser coverage
 
-The production workflow uses the real five-target capture and covers file →
-discovery → recorder confirmation → session selection → processing → summary →
-both downloads, technical disclosure, accessible states, and the local-only
-audit.
+The D10 production workflow recorded on 2026-08-14 used the real five-target
+capture and covered file → discovery → recorder confirmation → session
+selection → processing → summary → both downloads, technical disclosure,
+accessible states, and the local-only audit. The table and run counts below are
+historical evidence for that release state; they are not a description of the
+current public interaction design.
 
 | Coverage                        | Version exercised                                                             | Result                            | What it does and does not mean                                                                                                                                                                         |
 | ------------------------------- | ----------------------------------------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -118,6 +120,24 @@ still has genuine Chrome evidence plus engine-proxy evidence, not a claim of
 actual Edge/Firefox/Safari certification. A manual GUI and assistive-technology
 pass remains release evidence to collect on those applications.
 
+### Current streamlined public workflow
+
+The current public path removes the recorder-confirmation step and does not
+expose the core JSON serializer. After discovery, a unique recording character
+is used automatically. A unique likely attempt is processed automatically;
+when there is no unique likely attempt, each available card has a direct **Use
+this attempt** action instead of a radio selection followed by a second
+confirmation button. The public path is therefore normally file → discovery →
+automatic processing → encounter log, with an attempt-choice state only when
+necessary.
+
+Scanning and processing retain real semantic progress and cancellation but use
+compact player-facing copy. The result puts **Download encounter log** first;
+attempt statistics and technical/debug data are closed by default. There is no
+standalone product header or “Browser only” badge, and privacy
+is communicated once beside file intake rather than through repeated badges,
+cards, and footer claims.
+
 No browser-specific fallback was added because the exercised engines agreed on
 File/Blob streaming, workers, downloads, and controls. One production-build
 defect was demonstrated and fixed: Vite requires the literal
@@ -126,11 +146,13 @@ build audit now requires exactly one separate parser-worker asset.
 
 ## Accessibility review
 
-axe-core 4.13.0 reports zero violations in waiting, recorder-confirmation,
-session-selection, result/technical-detail, and recoverable-error states in the
-installed Chrome run and Chromium/Firefox/WebKit proxy workflows. This includes
-automated contrast rules. The 390 × 844 smoke has no horizontal overflow and
-keeps file/continue controls visible in all four projects.
+In the D10 release state, axe-core 4.13.0 reported zero violations in waiting,
+recorder-confirmation, session-selection, result/technical-detail, and
+recoverable-error states in the installed Chrome run and
+Chromium/Firefox/WebKit proxy workflows. This includes automated contrast
+rules. The 390 × 844 smoke had no horizontal overflow and kept file/continue
+controls visible in all four projects. These are historical results; the
+streamlined states require the same axe, focus, keyboard, and no-overflow gates.
 
 The keyboard/semantics review confirmed:
 
@@ -141,8 +163,9 @@ The keyboard/semantics review confirmed:
 - the progress bar has an accessible name, exact visible bytes/percentage, and
   a polite atomic status announcement quantized to ten-percent steps so every
   stream chunk is not announced;
-- cancellation, retry, file replacement, both exports, and disclosures are
-  keyboard controls;
+- cancellation, retry, Start over, the public encounter-log export, and
+  disclosures are keyboard controls; the D10 run additionally exercised the
+  then-public JSON export;
 - scrollable warning/error/technical preformatted regions are focusable;
 - warnings and errors include explicit headings and text, status/alert roles,
   and border/text cues, so meaning is not colour-only.
@@ -165,7 +188,9 @@ paths.
 The real browser workflow observes requests after file intake. The only
 permitted activity is bodyless same-origin GET loading of the emitted static
 worker asset; there are no POST bodies and no player GUID, creature GUID, name,
-or combat data in a request URL. After both exports, the page URL remains `/`,
+or combat data in a request URL. In the historical D10 two-export run, the page
+URL remained `/` after both exports; the same invariant applies after the
+current encounter-log-only public download. In both cases,
 localStorage/sessionStorage are empty, IndexedDB has no databases, cookies are
 empty, and no service-worker registration exists. Downloads use temporary
 `blob:` object URLs that are revoked and do not transmit data.
@@ -192,6 +217,9 @@ certification. Release-specific evidence and pending external sign-off are in
 The regressions cover whole-file/event retention, discovery normalization,
 post-roll early stopping, truthful cumulative byte progress, separate worker
 emission/main-thread responsiveness, cancellation and stale completion,
-replacement/retry/no-session recovery, explicit multi-character selection,
-recorder confirmation, five-target output, technical disclosure, both
-downloads, accessibility, and local-only behavior.
+start-over/retry/no-session recovery, explicit multi-character selection,
+automatic unique-character and unique-likely-attempt routing, direct
+multi-attempt actions, five-target output, closed technical disclosure, the
+public encounter-log download, internal JSON serialization, accessibility, and
+local-only behavior. The original D10 run counts above remain evidence for the
+older recorder-confirmation/two-download presentation.

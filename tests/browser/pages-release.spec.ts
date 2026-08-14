@@ -23,14 +23,14 @@ test("repository-scoped production entry point loads directly and after refresh"
   }
   await expect(
     page.getByRole("heading", {
-      name: "Find the clean attempt inside your combat log.",
+      name: "Turn a target dummy log into an encounter log.",
     }),
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", {
-      name: "Your combat log stays on your computer.",
-    }),
+    page.getByText("Processed locally. Nothing is uploaded."),
   ).toBeVisible();
+  await expect(page.getByText(/Archon desktop client/u)).toBeVisible();
+  await expect(page.getByText("Browser only", { exact: true })).toHaveCount(0);
 
   const loadedStaticPaths = responseStatuses
     .filter((entry) => new URL(entry.url).origin === base.origin)
@@ -59,7 +59,7 @@ test("repository-scoped production entry point loads directly and after refresh"
   await page.reload();
   expect(page.url()).toBe(directUrl);
   await expect(
-    page.getByRole("button", { name: "Choose a combat log" }),
+    page.getByRole("button", { name: "Choose combat log" }),
   ).toBeVisible();
   expect(new URL(page.url()).pathname).toBe(base.pathname);
 });
