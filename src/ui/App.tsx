@@ -372,12 +372,18 @@ function Summary({
   return (
     <div className="result-summary">
       <details className="character-profile-panel">
-        <summary>Character profile</summary>
+        <summary>
+          <span>Character profile</span>
+          <span className="character-profile-summary-guide">
+            Required: paste your SimulationCraft addon output
+          </span>
+        </summary>
         <div className="character-profile-body">
           <p>
-            In WoW, open the SimulationCraft addon with <code>/simc</code>, copy
-            all of its text, and paste it here. It supplies character metadata
-            only; every combat event still comes from this combat log.
+            Install the SimulationCraft addon before recording your log. In WoW,
+            log in to the character you recorded, enter <code>/simc</code>, copy
+            all of the addon's output, and paste it below. It supplies character
+            metadata only; every combat event still comes from this combat log.
           </p>
           {characterProfile === undefined ? null : (
             <div className="profile-accepted" role="status">
@@ -1182,7 +1188,13 @@ export function App({
           <section className="user-guide" aria-labelledby="guide-title">
             <h2 id="guide-title">How to use it</h2>
             <ol>
+              <li>Install the SimulationCraft addon before recording.</li>
               <li>Upload your target dummy combat log.</li>
+              <li>
+                On the result page, run <code>/simc</code> on the recorded
+                character and paste all of the addon's output into{" "}
+                <strong>Character profile</strong>.
+              </li>
               <li>
                 Download the transformed <code>.txt</code> file.
               </li>

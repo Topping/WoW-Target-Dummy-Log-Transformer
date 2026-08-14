@@ -250,9 +250,29 @@ p {
 }
 
 .character-profile-panel > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.75rem;
   color: var(--text);
   font-weight: 700;
   cursor: pointer;
+}
+
+.character-profile-panel > summary::before {
+  content: "▶";
+  font-size: 0.7rem;
+  transition: transform 120ms ease;
+}
+
+.character-profile-panel[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.character-profile-summary-guide {
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 500;
 }
 
 .character-profile-body > p,

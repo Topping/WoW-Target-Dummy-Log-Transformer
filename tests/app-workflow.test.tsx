@@ -280,6 +280,13 @@ describe("browser-oriented D08-D09 workflow", () => {
     ).toBeTruthy();
     expect((downloadButton as HTMLButtonElement).disabled).toBe(true);
     expect(screen.getByText(/validated SimulationCraft profile/u)).toBeTruthy();
+    const profilePanel = screen
+      .getByText("Character profile")
+      .closest("details");
+    expect(profilePanel).toHaveProperty("open", false);
+    expect(
+      screen.getByText("Required: paste your SimulationCraft addon output"),
+    ).toBeTruthy();
     expect(download).not.toHaveBeenCalled();
 
     await user.click(screen.getByText("View attempt details"));
@@ -305,6 +312,12 @@ describe("browser-oriented D08-D09 workflow", () => {
     await reachResult(user, client);
 
     await user.click(screen.getByText("Character profile"));
+    expect(
+      screen.getByText(/Install the SimulationCraft addon before recording/u),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("Required: paste your SimulationCraft addon output"),
+    ).toBeTruthy();
     const profile = screen.getByLabelText("SimulationCraft addon output");
     await user.type(profile, "complete simc output");
     await user.click(screen.getByRole("button", { name: "Use profile" }));
