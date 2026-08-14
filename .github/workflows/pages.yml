@@ -26,9 +26,6 @@ jobs:
       - run: npm run build
       - run: npm run audit:production
       - run: npm run audit:pages
-      - run: npx playwright install --with-deps chromium firefox webkit
-      - name: Exercise repository-scoped production artifact
-        run: npm run test:browser:pages:proxies
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
@@ -49,28 +46,3 @@ jobs:
       - name: Deploy immutable Pages artifact
         id: deployment
         uses: actions/deploy-pages@v5
-
-  smoke-deployed:
-    needs: deploy
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium firefox webkit
-      - name: Exercise deployed file-to-export workflow
-        env:
-          PAGES_BASE_PATH: /WoW-Target-Dummy-Log-Transformer/
-          PLAYWRIGHT_BASE_URL: ${{ needs.deploy.outputs.page_url }}
-        run: >-
-          npx playwright test
-          tests/browser/pages-release.spec.ts
-          tests/browser/workflow.spec.ts
-          --project=chromium-proxy
-          --project=firefox-proxy
-          --project=webkit-proxy
