@@ -26,6 +26,7 @@ const FAMILY_CASES = [
   ["SPELL_CAST_SUCCESS", "cast", `${COMMON},${SPELL}`],
   ["SPELL_CAST_FAILED", "cast", `${COMMON},${SPELL},Out of range`],
   ["SPELL_DAMAGE", "damage", `${COMMON},${SPELL},42,nil,AOE`],
+  ["SPELL_DAMAGE_SUPPORT", "damage", `${COMMON},${SPELL},42,nil,AOE`],
   ["SPELL_PERIODIC_DAMAGE", "damage", `${COMMON},${SPELL},42`],
   ["SWING_DAMAGE", "damage", `${COMMON},42`],
   [

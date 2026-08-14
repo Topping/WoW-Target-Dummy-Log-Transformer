@@ -43,7 +43,7 @@ Retail project 1, combat-log version 22, and build range 12.1.0 through 12.1.0.
 It normalizes the D03 priority families:
 
 - casts: start, success, and failed;
-- spell/periodic/swing/range damage;
+- spell (including support), periodic, swing, and range damage;
 - aura apply, refresh, remove, and dose variants;
 - energize, periodic energize, and drain;
 - summon and create;
