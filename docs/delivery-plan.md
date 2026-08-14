@@ -579,10 +579,13 @@ an informed decision about a future synthetic export.
 These items should be resolved in the owning chunk and recorded as an ADR,
 fixture label, or test—not left as undocumented implementation assumptions:
 
-1. Validation of the configurable 10-second inactivity and 20-second “Likely”
-   defaults against labelled split-session/class fixtures (D05).
-2. Measured default values for the approved soft/hard retained-data policy
+1. Measured default values for the approved soft/hard retained-data policy
    (D10).
+
+The D05 defaults are now validated: the 10-second threshold produces the four
+approved split groups and preserves the 87.413-second cleave group, while the
+20-second/two-intent/sustained-activity defaults classify substantive continuous
+attempts as Likely and short approved split groups as Possible.
 
 ## Decisions made
 

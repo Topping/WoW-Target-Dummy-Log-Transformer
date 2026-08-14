@@ -67,3 +67,47 @@ The D01 contracts changed where implementation required concrete losslessness:
 `relativeTimeTicks` on a full-log parse is relative to the first parsed source
 record. Later selected-session construction may derive the same field from the
 selected visible start without changing the exact timestamp key.
+
+## ADR-003: Browser transport lifecycle and bounded pass-one discovery
+
+**Status:** Accepted for D04-D05
+
+**Date:** 2026-08-14
+
+The browser worker owns `File`/`Blob` sampling and streaming. Core discovery
+accepts byte iterables plus plain `InputFileMetadata`; it does not import DOM,
+React, worker, or browser file types. The main-thread client accepts only the
+currently active operation ID, so a cancelled or superseded operation cannot
+advance application state.
+
+Pass one tokenizes raw records through the D02 incremental decoder but never
+constructs or retains a complete `CombatEvent` collection. Its retained state is
+maps of actor, target, ownership, encounter, and candidate-window aggregates.
+The returned retention counters explicitly report zero retained events and raw
+lines, making this boundary regression-testable.
+
+The current Retail schema now declares discovery boundary event names.
+`ENCOUNTER_START`/`ENCOUNTER_END` form genuine encounter envelopes;
+`COMBAT_LOG_VERSION`, zone/map changes, target death/destruction, and backwards
+timestamps stop candidate windows as applicable. This is a public extension to
+`CombatLogSchema`, allowing future schemas to name different explicit records
+without hard-wiring version checks into discovery.
+
+The D01 discovery contracts became concrete in D05:
+
+- `DiscoveryResult` includes the uniquely proposed recorder GUID only when one
+  player GUID/type carries `AFFILIATION_MINE`, retained encounter envelopes,
+  owned-entity observations, and aggregate-retention counters.
+- player and target candidates expose the component activity measures used for
+  deterministic ranking;
+- session candidates expose qualifying/player-initiated counts and typed reason
+  codes;
+- `SessionDiscoveryOptions` contains configurable inactivity and confidence
+  thresholds. Defaults are exported rather than embedded in sessionization.
+  `DISCOVER_FILE` may carry those options through the browser transport.
+
+`PROCESS_SESSION` transport, progress, cancellation, completion, error, and
+stale-result handling are implemented in D04. The runtime accepts a typed
+`SessionProcessor` installed by D06. Until that later chunk supplies detailed
+extraction, the production runtime returns the recoverable
+`SESSION_PROCESSOR_NOT_INSTALLED` error instead of fabricating a `Session`.

@@ -71,3 +71,12 @@ CSV quoting, UTF-8, version metadata, or record structure returns a typed
 recoverable failure rather than throwing from source-data handling. Naturally
 occurring encounter and combatant records are retained; absent records are never
 created.
+
+## Pass-one consumer
+
+`discoverCombatLogChunks` reuses `IncrementalLineDecoder`, `parseRawRecord`, log
+version parsing, and the schema registry, but deliberately does not call the
+full-log normalizer. It extracts only timestamps, event names, common actors,
+flags, and minimal interaction fields into bounded aggregates. This keeps the
+full conformance parser available for compact/schema tests while avoiding a
+capture-sized `CombatEvent[]` during browser discovery.

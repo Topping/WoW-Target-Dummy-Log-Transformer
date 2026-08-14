@@ -4,6 +4,7 @@ import type {
   ParserWarning,
   ProcessingProgress,
   Session,
+  SessionDiscoveryOptions,
   SessionSelection,
 } from "../core";
 
@@ -12,6 +13,7 @@ export type WorkerRequest =
       readonly type: "DISCOVER_FILE";
       readonly operationId: string;
       readonly file: File;
+      readonly options?: SessionDiscoveryOptions;
     }
   | {
       readonly type: "PROCESS_SESSION";

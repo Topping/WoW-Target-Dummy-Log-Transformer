@@ -20,6 +20,7 @@ export type { ParseCombatLogOptions } from "./parser";
 export type {
   BuildRange,
   CombatLogEventDefinition,
+  CombatLogDiscoveryBoundaries,
   CombatLogSchema,
   CombatLogSchemaCompatibility,
   SchemaNormalizationContext,

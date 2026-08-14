@@ -36,10 +36,18 @@ export interface CombatLogSchema {
   readonly id: string;
   readonly compatibility: CombatLogSchemaCompatibility;
   readonly eventDefinitions: ReadonlyMap<string, CombatLogEventDefinition>;
+  readonly discoveryBoundaries: CombatLogDiscoveryBoundaries;
   normalize(
     record: RawCombatLogRecord,
     context: SchemaNormalizationContext,
   ): OperationResult<CombatEvent>;
+}
+
+export interface CombatLogDiscoveryBoundaries {
+  readonly encounterStartEventTypes: readonly string[];
+  readonly encounterEndEventTypes: readonly string[];
+  readonly hardBoundaryEventTypes: readonly string[];
+  readonly targetEndEventTypes: readonly string[];
 }
 
 export interface SchemaNormalizationContext {
@@ -441,6 +449,12 @@ export const retail12_1_0Schema: CombatLogSchema = {
     buildRange: { minimum: "12.1.0", maximum: "12.1.0" },
   },
   eventDefinitions: RETAIL_12_1_0_DEFINITIONS,
+  discoveryBoundaries: {
+    encounterStartEventTypes: ["ENCOUNTER_START"],
+    encounterEndEventTypes: ["ENCOUNTER_END"],
+    hardBoundaryEventTypes: ["COMBAT_LOG_VERSION", "ZONE_CHANGE", "MAP_CHANGE"],
+    targetEndEventTypes: ["UNIT_DIED", "UNIT_DESTROYED"],
+  },
   normalize(record, context) {
     return normalizeKnownEvent(this.id, this.eventDefinitions, record, context);
   },
