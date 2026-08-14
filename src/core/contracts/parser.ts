@@ -1,4 +1,9 @@
-import type { RawField, RawTimestamp, SourceLocation } from "./common";
+import type {
+  RawField,
+  RawTimestamp,
+  SourceLineTerminator,
+  SourceLocation,
+} from "./common";
 import type { CombatEvent } from "./events";
 
 export type SchemaSelection = "exact" | "fallback" | "manual-override";
@@ -27,6 +32,8 @@ export interface RawCombatLogRecord {
   /** Event name followed by every payload field. */
   readonly fields: readonly RawField[];
   readonly raw: string;
+  /** Exact source line ending, or an empty string for an unterminated final line. */
+  readonly lineTerminator: SourceLineTerminator;
   readonly location: SourceLocation;
 }
 

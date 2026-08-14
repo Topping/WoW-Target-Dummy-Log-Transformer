@@ -41,9 +41,21 @@ same worker. These two guards cover both cooperative cancellation races and
 already-queued stale messages.
 
 `PROCESS_SESSION` uses the same lifecycle and delegates to a typed processor.
-D06 will install the real second-pass implementation; D04's default is the
-recoverable `SESSION_PROCESSOR_NOT_INSTALLED` error so D04 does not cross into
-detailed extraction or manufacture incomplete sessions.
+The browser worker now installs D06's real second-pass adapter. The adapter owns
+the `File` and Blob stream, passes only byte chunks, plain file metadata, the
+selection, and options into core extraction, and reports reading, filtering,
+and result-building phases. The injectable runtime fallback remains the
+recoverable `SESSION_PROCESSOR_NOT_INSTALLED` error for tests or alternate
+runtimes that deliberately omit a processor.
+
+Session extraction checks the same active operation token while reading and
+while filtering. Cancelling or superseding an extraction suppresses its late
+progress and completion, and the same worker can immediately process a new
+selection. Early completion of the selected post-roll cancels the remaining
+Blob reader without treating the intentional partial source read as an error.
+
+The concrete D06 filtering and D07 export behavior is documented in
+[`extraction-and-exports.md`](extraction-and-exports.md).
 
 `DISCOVER_FILE.options` optionally carries `SessionDiscoveryOptions`; omission
 uses the exported defaults. This keeps the normal path zero-configuration while

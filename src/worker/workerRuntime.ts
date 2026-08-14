@@ -4,6 +4,7 @@ import type {
   ProcessingPhase,
   Session,
   SessionDiscoveryOptions,
+  SessionExtractionOptions,
   SessionSelection,
 } from "../core";
 import { discoverCombatLogChunks } from "../core";
@@ -19,6 +20,7 @@ interface OperationToken {
 export interface SessionProcessingContext {
   readonly operationId: string;
   readonly shouldAbort: () => boolean;
+  readonly options: SessionExtractionOptions;
   readonly reportProgress: (
     phase: ProcessingPhase,
     bytesProcessed: number,
@@ -83,11 +85,14 @@ export class ParserWorkerRuntime {
         },
       );
     } else {
-      void this.#process(request.file, request.selection, token).catch(
-        (error: unknown) => {
-          this.#unexpectedFailure(token, error);
-        },
-      );
+      void this.#process(
+        request.file,
+        request.selection,
+        request.options,
+        token,
+      ).catch((error: unknown) => {
+        this.#unexpectedFailure(token, error);
+      });
     }
   }
 
@@ -270,6 +275,7 @@ export class ParserWorkerRuntime {
   async #process(
     file: File,
     selection: SessionSelection,
+    options: SessionExtractionOptions | undefined,
     token: OperationToken,
   ): Promise<void> {
     this.#progress(
@@ -282,6 +288,7 @@ export class ParserWorkerRuntime {
     const result = await this.#processSession(file, selection, {
       operationId: token.operationId,
       shouldAbort: () => !this.#isCurrent(token),
+      options: options ?? {},
       reportProgress: (phase, bytesProcessed, status) => {
         this.#progress(token, phase, bytesProcessed, file.size, status);
       },

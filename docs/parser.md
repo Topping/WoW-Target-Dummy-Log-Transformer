@@ -8,8 +8,10 @@ independent and accepts `Iterable<Uint8Array>` or
 
 `IncrementalLineDecoder` uses streaming UTF-8 decoding, so a chunk may end in a
 multibyte character. LF and CRLF are accepted even when the two CRLF bytes arrive
-in different chunks. `finish()` returns a final unterminated line. Invalid UTF-8
-is a typed recoverable `INVALID_UTF8` failure with line context.
+in different chunks. Each decoded record retains its exact `\n`, `\r\n`, or
+unterminated `""` source terminator for filtered-log export. `finish()` returns a
+final unterminated line. Invalid UTF-8 is a typed recoverable `INVALID_UTF8`
+failure with line context.
 
 `parseCombatLogChunks` is the full-log conformance API. It consumes byte chunks
 without `File.text()` or whole-file string splitting. `parseCombatLogText` is a
@@ -56,7 +58,10 @@ client version.
 
 GUID prefixes classify actor references as player, creature, pet, guardian,
 vehicle, or unknown. A zero GUID and `nil` remain unknown; actor names never
-establish ownership.
+establish ownership. Generic events also expose source/destination actors when
+their stable common actor header is structurally recognizable; they remain
+`normalized: false`, retain all raw fields, and still emit the unknown-event
+warning.
 
 ## Compatibility and failures
 

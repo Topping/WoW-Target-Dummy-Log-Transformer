@@ -118,14 +118,22 @@ export async function* streamBlobBytes(
   shouldAbort: () => boolean,
 ): AsyncGenerator<Uint8Array> {
   const reader = blob.stream().getReader();
+  let completed = false;
   try {
     while (!shouldAbort()) {
       const next = await reader.read();
-      if (next.done) return;
+      if (next.done) {
+        completed = true;
+        return;
+      }
       yield next.value;
     }
   } finally {
-    if (shouldAbort()) await reader.cancel("Operation cancelled");
+    if (!completed) {
+      await reader.cancel(
+        shouldAbort() ? "Operation cancelled" : "Selected window complete",
+      );
+    }
     reader.releaseLock();
   }
 }

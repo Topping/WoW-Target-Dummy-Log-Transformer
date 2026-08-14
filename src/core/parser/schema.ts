@@ -229,6 +229,14 @@ function commonActors(values: readonly string[]) {
   return { source, destination };
 }
 
+function hasCommonActorHeader(values: readonly string[]): boolean {
+  return (
+    values.length >= 8 &&
+    values[2]?.startsWith("0x") === true &&
+    values[6]?.startsWith("0x") === true
+  );
+}
+
 function spellReference(
   values: readonly string[],
   offset: number,
@@ -292,6 +300,9 @@ function normalizeKnownEvent(
   const definition = definitions.get(record.eventType);
   const values = fieldValues(record);
   if (definition === undefined) {
+    const actors = hasCommonActorHeader(values)
+      ? commonActors(values)
+      : undefined;
     return {
       ok: true,
       value: {
@@ -301,6 +312,7 @@ function normalizeKnownEvent(
         type: record.eventType,
         family: "generic",
         normalized: false,
+        ...(actors ?? {}),
         payload: { family: "generic" },
         rawFields: record.fields,
         additionalFields: values,
@@ -308,6 +320,7 @@ function normalizeKnownEvent(
         parserVersion: context.parserVersion,
         schemaId,
         raw: record.raw,
+        lineTerminator: record.lineTerminator,
         location: record.location,
       },
       warnings: [
@@ -342,6 +355,7 @@ function normalizeKnownEvent(
         parserVersion: context.parserVersion,
         schemaId,
         raw: record.raw,
+        lineTerminator: record.lineTerminator,
         location: record.location,
       },
       warnings: [
@@ -398,6 +412,7 @@ function normalizeKnownEvent(
       parserVersion: context.parserVersion,
       schemaId,
       raw: record.raw,
+      lineTerminator: record.lineTerminator,
       location: record.location,
     },
     warnings: [],

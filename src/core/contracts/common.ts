@@ -24,3 +24,6 @@ export interface RawField {
 }
 
 export type CombatLogOrigin = "combat-log" | "synthetic";
+
+/** Exact source terminator following a decoded combat-log record. */
+export type SourceLineTerminator = "" | "\n" | "\r\n";

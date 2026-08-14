@@ -3,6 +3,7 @@ import type {
   CombatLogOrigin,
   RawField,
   RawTimestamp,
+  SourceLineTerminator,
   SourceLocation,
 } from "./common";
 
@@ -53,5 +54,9 @@ export interface CombatEvent {
   readonly parserVersion: string;
   readonly schemaId: string;
   readonly raw: string;
+  /** Exact source line ending retained for source-compatible export. */
+  readonly lineTerminator: SourceLineTerminator;
+  /** True when an unrelated actor applied an incoming effect to the primary actor graph. */
+  readonly externalEffect?: boolean;
   readonly location: SourceLocation;
 }

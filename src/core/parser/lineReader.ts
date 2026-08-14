@@ -1,4 +1,8 @@
-import type { OperationResult, SourceLocation } from "../contracts";
+import type {
+  OperationResult,
+  SourceLineTerminator,
+  SourceLocation,
+} from "../contracts";
 
 import { parserFailure } from "./diagnostics";
 
@@ -6,6 +10,7 @@ export interface DecodedLine {
   readonly raw: string;
   readonly location: SourceLocation;
   readonly terminated: boolean;
+  readonly lineTerminator: SourceLineTerminator;
 }
 
 /** Stateful UTF-8 decoder and line splitter. It accepts arbitrary byte boundaries. */
@@ -58,6 +63,7 @@ export class IncrementalLineDecoder {
           raw: this.#pending,
           location: { lineNumber: this.#lineNumber },
           terminated: false,
+          lineTerminator: "",
         });
         this.#pending = "";
         this.#lineNumber += 1;
@@ -83,12 +89,12 @@ export class IncrementalLineDecoder {
     let newlineIndex = this.#pending.indexOf("\n");
     while (newlineIndex >= 0) {
       const beforeNewline = this.#pending.slice(0, newlineIndex);
+      const usesCrLf = beforeNewline.endsWith("\r");
       lines.push({
-        raw: beforeNewline.endsWith("\r")
-          ? beforeNewline.slice(0, -1)
-          : beforeNewline,
+        raw: usesCrLf ? beforeNewline.slice(0, -1) : beforeNewline,
         location: { lineNumber: this.#lineNumber },
         terminated: true,
+        lineTerminator: usesCrLf ? "\r\n" : "\n",
       });
       this.#lineNumber += 1;
       this.#pending = this.#pending.slice(newlineIndex + 1);

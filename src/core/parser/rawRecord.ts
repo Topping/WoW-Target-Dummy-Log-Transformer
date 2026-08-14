@@ -1,6 +1,7 @@
 import type {
   OperationResult,
   RawCombatLogRecord,
+  SourceLineTerminator,
   SourceLocation,
 } from "../contracts";
 
@@ -13,6 +14,7 @@ const RECORD_PATTERN = /^(\S+ \S+) {2}(.+)$/;
 export function parseRawRecord(
   rawLine: string,
   location: SourceLocation,
+  lineTerminator: SourceLineTerminator = "",
 ): OperationResult<RawCombatLogRecord> {
   const match = RECORD_PATTERN.exec(rawLine);
   if (match?.[1] === undefined || match[2] === undefined) {
@@ -53,6 +55,7 @@ export function parseRawRecord(
       eventType,
       fields: fields.value,
       raw: rawLine,
+      lineTerminator,
       location,
     },
     warnings: [],

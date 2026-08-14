@@ -960,7 +960,7 @@ function consumeLine(
 ): OperationResult<undefined> {
   if (line.raw.length === 0)
     return { ok: true, value: undefined, warnings: [] };
-  const parsed = parseRawRecord(line.raw, line.location);
+  const parsed = parseRawRecord(line.raw, line.location, line.lineTerminator);
   if (!parsed.ok) return parsed;
   return scanner.consume(parsed.value);
 }

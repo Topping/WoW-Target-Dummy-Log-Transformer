@@ -3,12 +3,13 @@
 A privacy-preserving browser application for extracting one character's
 training-dummy attempt from a noisy World of Warcraft Retail combat log.
 
-The current D00-D05 foundation provides the characterized fixture set, shared
+The current D00-D07 foundation provides the characterized fixture set, shared
 TypeScript contracts, incremental UTF-8/line/CSV parser primitives, a registered
 Retail 12.1.0 combat-log schema, canonical events and actors, the typed worker
-boundary and lifecycle, bounded player/target/session discovery, and an
-accessible static React shell. Detailed D06 extraction/filtering, file-intake UI,
-and exports remain later delivery chunks.
+boundary and lifecycle, bounded player/target/session discovery, detailed
+streaming extraction and ownership-aware filtering, versioned JSON and lossless
+filtered-log exports, and an accessible static React shell. File intake,
+selection, and result UI remain D08-D09 work.
 
 ## Development
 
@@ -33,6 +34,8 @@ in [`docs/test-data.md`](docs/test-data.md). Architecture decisions are in
 behavior is in [`docs/parser.md`](docs/parser.md).
 Worker and pass-one discovery behavior is in
 [`docs/worker-and-discovery.md`](docs/worker-and-discovery.md).
+Detailed extraction, filtering, budgets, and exports are documented in
+[`docs/extraction-and-exports.md`](docs/extraction-and-exports.md).
 
 The production build in `dist/` contains only static HTML, CSS, and JavaScript.
 Combat logs remain in the browser: there is no backend, analytics, persistence,

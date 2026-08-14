@@ -27,8 +27,8 @@ worker, or external state-management package is present.
 
 Exact combat-log times use `bigint` counts of 100-microsecond ticks in memory.
 The original timestamp text and fractional component are retained alongside the
-ordering value. A later versioned JSON exporter will define the string encoding
-for these integers rather than allowing implicit precision loss.
+ordering value. D07's versioned JSON exporter encodes every tick value as a
+base-10 JSON string rather than allowing implicit precision loss.
 
 ## ADR-002: Lossless incremental records and registered schemas
 
@@ -108,6 +108,37 @@ The D01 discovery contracts became concrete in D05:
 
 `PROCESS_SESSION` transport, progress, cancellation, completion, error, and
 stale-result handling are implemented in D04. The runtime accepts a typed
-`SessionProcessor` installed by D06. Until that later chunk supplies detailed
-extraction, the production runtime returns the recoverable
-`SESSION_PROCESSOR_NOT_INSTALLED` error instead of fabricating a `Session`.
+`SessionProcessor`; D06 installs the real streaming processor in the production
+browser worker.
+
+## ADR-004: Bounded session extraction and versioned local exports
+
+**Status:** Accepted for D06-D07
+
+**Date:** 2026-08-14
+
+Core extraction accepts byte iterables, plain file metadata, a selected visible
+window, and plain options. The browser worker alone owns `File`, Blob streaming,
+and operation publication. Extraction retains the log-version record required
+for a standalone filtered log, cheaply timestamp-skips other pre-window lines,
+fully parses the inclusive pre-roll through post-roll range, and stops on the
+first record beyond it. The visible `Session.startTime`, `endTime`, and duration
+always remain the selected discovery boundaries.
+
+Ownership is an evidence graph. Advanced owner GUIDs outrank summon/create
+edges, which outrank the selected recorder's `AFFILIATION_MINE` assumption.
+Conflicts keep the stronger edge and emit a structured
+`OWNERSHIP_CONFLICT` warning containing both claims. Actor names are never
+evidence. Filtering is resolved only after the graph is built so earlier events
+benefit from later evidence in the bounded extraction window.
+
+Retained-event and UTF-8 source-byte budgets are optional public options. No
+soft or hard default is installed before D10 measurement. A soft crossing warns
+once and continues; a hard crossing returns a recoverable error and no partial
+`Session`.
+
+Core export code produces deterministic strings only. Session JSON format v1
+has a committed schema and decimal-string bigint encoding; filtered log output
+concatenates each retained raw line with its exact source terminator. Browser
+transport creates Blobs and assigns deterministic safe filenames. Neither path
+uses network requests, storage, cookies, or a backend.

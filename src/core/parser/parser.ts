@@ -54,7 +54,7 @@ function readDecodedLine(
     );
     return { ok: true, value: undefined, warnings: [] };
   }
-  const parsed = parseRawRecord(line.raw, line.location);
+  const parsed = parseRawRecord(line.raw, line.location, line.lineTerminator);
   if (!parsed.ok) return parsed;
   records.push(parsed.value);
   warnings.push(...parsed.warnings);

@@ -27,8 +27,8 @@ export function parserFailure(
   };
 }
 
-export function parserWarning(
-  code: string,
+export function parserWarning<Code extends string>(
+  code: Code,
   message: string,
   options: {
     readonly location?: SourceLocation;
@@ -37,7 +37,7 @@ export function parserWarning(
     readonly rawLine?: string;
     readonly details?: Readonly<Record<string, unknown>>;
   } = {},
-): ParserWarning {
+): ParserWarning<Code> {
   const hasContext = Object.keys(options).length > 0;
   return {
     code,

@@ -325,6 +325,8 @@ be developed before its worker integration lands.
 
 ## D06 — Pass-two extraction, ownership, and filtering
 
+**Implementation:** Complete on the current branch.
+
 **Outcome:** One selected attempt becomes the clean canonical `Session` that is
 the product's primary data asset.
 
@@ -376,6 +378,8 @@ tests, audit-accounting invariants, and an end-to-end noisy-capture golden test.
 **Dependencies:** D03-D05.
 
 ## D07 — JSON and filtered raw-log exports
+
+**Implementation:** Complete on the current branch.
 
 **Outcome:** A processed session can be downloaded locally in both canonical and
 source-compatible forms.

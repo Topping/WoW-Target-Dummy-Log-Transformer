@@ -6,6 +6,7 @@ import type {
   ProcessingProgress,
   Session,
   SessionDiscoveryOptions,
+  SessionExtractionOptions,
   SessionSelection,
 } from "../core";
 
@@ -34,6 +35,10 @@ export interface WorkerOperationOptions {
 
 export interface DiscoverWorkerOperationOptions extends WorkerOperationOptions {
   readonly discoveryOptions?: SessionDiscoveryOptions;
+}
+
+export interface ProcessWorkerOperationOptions extends WorkerOperationOptions {
+  readonly extractionOptions?: SessionExtractionOptions;
 }
 
 interface PendingOperation<T> {
@@ -99,7 +104,7 @@ export class ParserWorkerClient {
   process(
     file: File,
     selection: SessionSelection,
-    options: WorkerOperationOptions = {},
+    options: ProcessWorkerOperationOptions = {},
   ): Promise<OperationResult<Session>> {
     this.cancel();
     const operationId = this.#operationId();
@@ -116,6 +121,9 @@ export class ParserWorkerClient {
         operationId,
         file,
         selection,
+        ...(options.extractionOptions === undefined
+          ? {}
+          : { options: options.extractionOptions }),
       });
     });
   }

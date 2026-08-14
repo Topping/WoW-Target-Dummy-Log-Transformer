@@ -1,0 +1,430 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.invalid/wow-training-dummy-session/v1/schema.json",
+  "title": "WoW Training Dummy Session JSON v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "session"],
+  "properties": {
+    "format": { "const": "wow-training-dummy-session" },
+    "version": { "const": 1 },
+    "session": { "$ref": "#/definitions/session" }
+  },
+  "definitions": {
+    "tick": { "type": "string", "pattern": "^-?[0-9]+$" },
+    "timestamp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw", "localTimeTicks", "fractionalComponent"],
+      "properties": {
+        "raw": { "type": "string" },
+        "localTimeTicks": { "$ref": "#/definitions/tick" },
+        "fractionalComponent": { "type": "string", "pattern": "^[0-9]{1,4}$" }
+      }
+    },
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lineNumber"],
+      "properties": {
+        "lineNumber": { "type": "integer", "minimum": 1 },
+        "byteOffset": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "actorReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["guid"],
+      "properties": {
+        "guid": { "type": "string" },
+        "name": { "type": "string" },
+        "flags": { "type": "string" },
+        "raidFlags": { "type": "string" },
+        "type": {
+          "enum": [
+            "player",
+            "creature",
+            "pet",
+            "guardian",
+            "vehicle",
+            "unknown"
+          ]
+        }
+      }
+    },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["guid", "type", "relationship"],
+      "properties": {
+        "guid": { "type": "string" },
+        "name": { "type": "string" },
+        "flags": { "type": "string" },
+        "raidFlags": { "type": "string" },
+        "type": {
+          "enum": [
+            "player",
+            "creature",
+            "pet",
+            "guardian",
+            "vehicle",
+            "unknown"
+          ]
+        },
+        "relationship": {
+          "enum": [
+            "primary",
+            "owned-by-primary",
+            "target",
+            "external",
+            "unknown"
+          ]
+        },
+        "ownerGuid": { "type": "string" },
+        "ownershipEvidence": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "advanced-owner-guid",
+              "summon",
+              "create",
+              "affiliation-mine"
+            ]
+          }
+        }
+      }
+    },
+    "parser": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["parserVersion", "schema"],
+      "properties": {
+        "parserVersion": { "type": "string" },
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "selection"],
+          "properties": {
+            "id": { "type": "string" },
+            "selection": { "enum": ["exact", "fallback", "manual-override"] },
+            "detectedVersion": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "projectId",
+                "logVersion",
+                "buildVersion",
+                "advancedLoggingEnabled"
+              ],
+              "properties": {
+                "projectId": { "type": "integer" },
+                "logVersion": { "type": "integer" },
+                "buildVersion": { "type": "string" },
+                "advancedLoggingEnabled": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "rawField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw", "value", "quoted"],
+      "properties": {
+        "raw": { "type": "string" },
+        "value": { "type": "string" },
+        "quoted": { "type": "boolean" }
+      }
+    },
+    "spell": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "number" },
+        "name": { "type": "string" },
+        "school": { "type": "string" }
+      }
+    },
+    "eventPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["family"],
+      "properties": {
+        "family": {
+          "enum": [
+            "cast",
+            "damage",
+            "aura",
+            "resource",
+            "summon",
+            "death",
+            "combatant-info",
+            "encounter",
+            "version",
+            "generic"
+          ]
+        },
+        "auraType": { "type": "string" },
+        "amount": { "type": "string" },
+        "failureReason": { "type": "string" },
+        "encounterId": { "type": "number" },
+        "encounterName": { "type": "string" },
+        "success": { "type": "boolean" },
+        "combatantGuid": { "type": "string" }
+      }
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "timestamp",
+        "relativeTimeTicks",
+        "type",
+        "family",
+        "normalized",
+        "payload",
+        "rawFields",
+        "additionalFields",
+        "origin",
+        "parserVersion",
+        "schemaId",
+        "raw",
+        "lineTerminator",
+        "location"
+      ],
+      "properties": {
+        "timestamp": { "$ref": "#/definitions/timestamp" },
+        "relativeTimeTicks": { "$ref": "#/definitions/tick" },
+        "type": { "type": "string" },
+        "family": {
+          "enum": [
+            "cast",
+            "damage",
+            "aura",
+            "resource",
+            "summon",
+            "death",
+            "combatant-info",
+            "encounter",
+            "version",
+            "generic"
+          ]
+        },
+        "normalized": { "type": "boolean" },
+        "source": { "$ref": "#/definitions/actorReference" },
+        "destination": { "$ref": "#/definitions/actorReference" },
+        "spell": { "$ref": "#/definitions/spell" },
+        "payload": { "$ref": "#/definitions/eventPayload" },
+        "rawFields": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/rawField" }
+        },
+        "additionalFields": { "type": "array", "items": { "type": "string" } },
+        "origin": { "enum": ["combat-log", "synthetic"] },
+        "parserVersion": { "type": "string" },
+        "schemaId": { "type": "string" },
+        "raw": { "type": "string" },
+        "lineTerminator": { "enum": ["", "\n", "\r\n"] },
+        "externalEffect": { "type": "boolean" },
+        "location": { "$ref": "#/definitions/location" }
+      }
+    },
+    "warning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "severity", "message"],
+      "properties": {
+        "code": { "type": "string" },
+        "severity": { "enum": ["info", "warning"] },
+        "message": { "type": "string" },
+        "context": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "location": { "$ref": "#/definitions/location" },
+            "eventType": { "type": "string" },
+            "schemaId": { "type": "string" },
+            "rawLine": { "type": "string" },
+            "details": { "type": "object", "additionalProperties": true }
+          }
+        }
+      }
+    },
+    "targetStatistics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "targetGuid",
+        "relevantEventCount",
+        "outgoingEventCount",
+        "incomingEventCount",
+        "damageEventCount",
+        "observedDamageAmount"
+      ],
+      "properties": {
+        "targetGuid": { "type": "string" },
+        "relevantEventCount": { "type": "integer", "minimum": 0 },
+        "outgoingEventCount": { "type": "integer", "minimum": 0 },
+        "incomingEventCount": { "type": "integer", "minimum": 0 },
+        "damageEventCount": { "type": "integer", "minimum": 0 },
+        "observedDamageAmount": { "type": "number", "minimum": 0 }
+      }
+    },
+    "filtering": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "consideredRecordCount",
+        "keptRecordCount",
+        "removedRecordCount",
+        "keptByReason",
+        "removedByReason",
+        "skippedBeforePreRollCount",
+        "stoppedAfterPostRoll",
+        "bytesRead",
+        "estimatedRetainedBytes"
+      ],
+      "properties": {
+        "consideredRecordCount": { "type": "integer", "minimum": 0 },
+        "keptRecordCount": { "type": "integer", "minimum": 0 },
+        "removedRecordCount": { "type": "integer", "minimum": 0 },
+        "keptByReason": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "primary-outgoing",
+            "owned-entity-outgoing",
+            "primary-incoming",
+            "owned-entity-incoming",
+            "selected-target-metadata",
+            "required-metadata"
+          ],
+          "properties": {
+            "primary-outgoing": { "type": "integer", "minimum": 0 },
+            "owned-entity-outgoing": { "type": "integer", "minimum": 0 },
+            "primary-incoming": { "type": "integer", "minimum": 0 },
+            "owned-entity-incoming": { "type": "integer", "minimum": 0 },
+            "selected-target-metadata": { "type": "integer", "minimum": 0 },
+            "required-metadata": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "removedByReason": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "unrelated-player-activity",
+            "unrelated-creature-activity",
+            "unrelated-record"
+          ],
+          "properties": {
+            "unrelated-player-activity": { "type": "integer", "minimum": 0 },
+            "unrelated-creature-activity": { "type": "integer", "minimum": 0 },
+            "unrelated-record": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "skippedBeforePreRollCount": { "type": "integer", "minimum": 0 },
+        "stoppedAfterPostRoll": { "type": "boolean" },
+        "bytesRead": { "type": "integer", "minimum": 0 },
+        "estimatedRetainedBytes": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "statistics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relevantEventCount",
+        "removedEventCount",
+        "controlledEntityCount",
+        "externalEffectCount",
+        "unknownEventTypeCount",
+        "targets",
+        "filtering"
+      ],
+      "properties": {
+        "relevantEventCount": { "type": "integer", "minimum": 0 },
+        "removedEventCount": { "type": "integer", "minimum": 0 },
+        "controlledEntityCount": { "type": "integer", "minimum": 0 },
+        "externalEffectCount": { "type": "integer", "minimum": 0 },
+        "unknownEventTypeCount": { "type": "integer", "minimum": 0 },
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/targetStatistics" }
+        },
+        "filtering": { "$ref": "#/definitions/filtering" }
+      }
+    },
+    "debugDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lineNumber",
+        "timestamp",
+        "relativeTimeTicks",
+        "eventType",
+        "decision",
+        "reason"
+      ],
+      "properties": {
+        "lineNumber": { "type": "integer", "minimum": 1 },
+        "timestamp": { "$ref": "#/definitions/timestamp" },
+        "relativeTimeTicks": { "$ref": "#/definitions/tick" },
+        "eventType": { "type": "string" },
+        "decision": { "enum": ["kept", "removed"] },
+        "reason": { "type": "string" },
+        "sourceGuid": { "type": "string" },
+        "destinationGuid": { "type": "string" }
+      }
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "parser",
+        "startTime",
+        "endTime",
+        "durationTicks",
+        "player",
+        "targets",
+        "actors",
+        "events",
+        "warnings",
+        "statistics"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "parser": { "$ref": "#/definitions/parser" },
+        "startTime": { "$ref": "#/definitions/timestamp" },
+        "endTime": { "$ref": "#/definitions/timestamp" },
+        "durationTicks": { "$ref": "#/definitions/tick" },
+        "player": { "$ref": "#/definitions/actor" },
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/actor" }
+        },
+        "focusTargetGuid": { "type": "string" },
+        "actors": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/actor" }
+        },
+        "events": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/event" }
+        },
+        "warnings": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/warning" }
+        },
+        "statistics": { "$ref": "#/definitions/statistics" },
+        "debugDecisions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/debugDecision" }
+        }
+      }
+    }
+  }
+}

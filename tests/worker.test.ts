@@ -13,6 +13,7 @@ import {
 import {
   ParserWorkerClient,
   ParserWorkerRuntime,
+  processSessionFile,
   validateCombatLogBlob,
   type SessionProcessor,
   type WorkerRequest,
@@ -352,6 +353,74 @@ describe("PROCESS_SESSION lifecycle and cancellation races", () => {
       ),
     ).toBe(false);
   });
+
+  it("runs the real streaming processor, cancels without stale completion, and reuses the worker", async () => {
+    const responses: WorkerResponse[] = [];
+    const runtime = new ParserWorkerRuntime((response) => {
+      responses.push(response);
+      if (
+        response.type === "PROGRESS" &&
+        response.progress.operationId === "cancel-real" &&
+        response.progress.phase === "processing-session" &&
+        response.progress.bytesProcessed > 0
+      ) {
+        runtime.handle({ type: "CANCEL", operationId: "cancel-real" });
+      }
+    }, processSessionFile);
+    runtime.handle({
+      type: "PROCESS_SESSION",
+      operationId: "cancel-real",
+      file: logFile([HEADER, ...Array.from({ length: 2_000 }, () => DAMAGE)]),
+      selection: selection(),
+    });
+    await waitFor(
+      () =>
+        responses.some(
+          (response) =>
+            response.type === "ERROR" &&
+            response.operationId === "cancel-real" &&
+            response.error.category === "cancelled",
+        ),
+      "real processor cancellation was not reported",
+    );
+    await delay(5);
+    expect(
+      responses.some(
+        (response) =>
+          response.type === "SESSION_COMPLETE" &&
+          response.operationId === "cancel-real",
+      ),
+    ).toBe(false);
+
+    runtime.handle({
+      type: "PROCESS_SESSION",
+      operationId: "reuse-real",
+      file: logFile(),
+      selection: selection(),
+      options: { preRollMs: 0, postRollMs: 0 },
+    });
+    await waitFor(
+      () =>
+        responses.some(
+          (response) =>
+            response.type === "SESSION_COMPLETE" &&
+            response.operationId === "reuse-real",
+        ),
+      "reused real processor did not complete",
+    );
+    const complete = responses.find(
+      (response) =>
+        response.type === "SESSION_COMPLETE" &&
+        response.operationId === "reuse-real",
+    );
+    expect(
+      complete?.type === "SESSION_COMPLETE" ? complete.session : undefined,
+    ).toMatchObject({
+      id: "session-1",
+      player: { guid: "Player-1", relationship: "primary" },
+      targets: [{ guid: "Creature-1", relationship: "target" }],
+    });
+  });
 });
 
 class FakeWorker implements WorkerTransport {
@@ -428,5 +497,45 @@ describe("main-thread stale-message guard", () => {
     });
     client.dispose();
     expect(worker.terminated).toBe(true);
+  });
+
+  it("carries explicit extraction options through PROCESS_SESSION", async () => {
+    const worker = new FakeWorker();
+    const client = new ParserWorkerClient(worker);
+    const pending = client.process(logFile(), selection(), {
+      extractionOptions: {
+        preRollMs: 1_000,
+        postRollMs: 2_000,
+        budgets: { hardRetainedEventLimit: 50 },
+        includeDebugDecisions: true,
+      },
+    });
+    const request = worker.requests[0];
+    expect(request).toMatchObject({
+      type: "PROCESS_SESSION",
+      options: {
+        preRollMs: 1_000,
+        postRollMs: 2_000,
+        budgets: { hardRetainedEventLimit: 50 },
+        includeDebugDecisions: true,
+      },
+    });
+    if (request?.type !== "PROCESS_SESSION")
+      throw new Error("expected a process request");
+    worker.emit({
+      type: "ERROR",
+      operationId: request.operationId,
+      error: {
+        category: "internal",
+        code: "TEST_END",
+        message: "test terminal response",
+        recoverable: true,
+      },
+    });
+    await expect(pending).resolves.toMatchObject({
+      ok: false,
+      error: { code: "TEST_END" },
+    });
+    client.dispose();
   });
 });

@@ -5,6 +5,7 @@ import type {
   ProcessingProgress,
   Session,
   SessionDiscoveryOptions,
+  SessionExtractionOptions,
   SessionSelection,
 } from "../core";
 
@@ -20,6 +21,7 @@ export type WorkerRequest =
       readonly operationId: string;
       readonly file: File;
       readonly selection: SessionSelection;
+      readonly options?: SessionExtractionOptions;
     }
   | {
       readonly type: "CANCEL";
