@@ -12,6 +12,7 @@ export interface ActorReference {
   readonly name?: string;
   readonly flags?: string;
   readonly raidFlags?: string;
+  readonly type?: ActorType;
 }
 
 export interface Actor extends ActorReference {

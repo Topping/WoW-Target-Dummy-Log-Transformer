@@ -1,3 +1,6 @@
+import type { RawField, RawTimestamp, SourceLocation } from "./common";
+import type { CombatEvent } from "./events";
+
 export type SchemaSelection = "exact" | "fallback" | "manual-override";
 
 export interface CombatLogVersion {
@@ -16,6 +19,21 @@ export interface SchemaMetadata {
 export interface ParserMetadata {
   readonly parserVersion: string;
   readonly schema: SchemaMetadata;
+}
+
+export interface RawCombatLogRecord {
+  readonly timestamp: RawTimestamp;
+  readonly eventType: string;
+  /** Event name followed by every payload field. */
+  readonly fields: readonly RawField[];
+  readonly raw: string;
+  readonly location: SourceLocation;
+}
+
+export interface ParsedCombatLog {
+  readonly parser: ParserMetadata;
+  readonly records: readonly CombatEvent[];
+  readonly linesRead: number;
 }
 
 export type ProcessingPhase =

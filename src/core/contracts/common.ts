@@ -14,4 +14,13 @@ export interface RawTimestamp {
   readonly fractionalComponent: string;
 }
 
+/** One CSV token in both its source spelling and decoded form. */
+export interface RawField {
+  /** Exact token text, including surrounding quotes and escaped quotes. */
+  readonly raw: string;
+  /** Decoded field value. `nil` intentionally remains the string `nil`. */
+  readonly value: string;
+  readonly quoted: boolean;
+}
+
 export type CombatLogOrigin = "combat-log" | "synthetic";

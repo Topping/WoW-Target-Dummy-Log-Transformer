@@ -18,7 +18,8 @@ describe("framework-independent core contracts", () => {
       targetGuids,
     };
 
-    expect(Object.keys(coreModule)).toEqual([]);
+    expect(coreModule).toHaveProperty("parseCombatLogChunks");
+    expect(coreModule).toHaveProperty("defaultSchemaRegistry");
     expect(candidate.targetGuids).toHaveLength(2);
     expectTypeOf<Session["targets"]>().toExtend<
       NonEmptyReadonlyArray<Session["targets"][number]>

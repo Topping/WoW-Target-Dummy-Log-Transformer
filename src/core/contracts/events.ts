@@ -1,5 +1,10 @@
 import type { ActorReference } from "./actors";
-import type { CombatLogOrigin, RawTimestamp, SourceLocation } from "./common";
+import type {
+  CombatLogOrigin,
+  RawField,
+  RawTimestamp,
+  SourceLocation,
+} from "./common";
 
 export interface SpellReference {
   readonly id?: number;
@@ -7,16 +12,46 @@ export interface SpellReference {
   readonly school?: string;
 }
 
+export type EventFamily =
+  | "cast"
+  | "damage"
+  | "aura"
+  | "resource"
+  | "summon"
+  | "death"
+  | "combatant-info"
+  | "encounter"
+  | "version"
+  | "generic";
+
+export interface EventPayload {
+  readonly family: EventFamily;
+  readonly auraType?: string;
+  readonly amount?: string;
+  readonly failureReason?: string;
+  readonly encounterId?: number;
+  readonly encounterName?: string;
+  readonly success?: boolean;
+  readonly combatantGuid?: string;
+}
+
 export interface CombatEvent {
   readonly timestamp: RawTimestamp;
   readonly relativeTimeTicks: bigint;
+  /** Event name exactly as supplied by WoW. */
   readonly type: string;
+  readonly family: EventFamily;
+  readonly normalized: boolean;
   readonly source?: ActorReference;
   readonly destination?: ActorReference;
   readonly spell?: SpellReference;
-  readonly payload: unknown;
+  readonly payload: EventPayload;
+  /** Every payload token, including the event name, in its original spelling. */
+  readonly rawFields: readonly RawField[];
   readonly additionalFields: readonly string[];
   readonly origin: CombatLogOrigin;
+  readonly parserVersion: string;
+  readonly schemaId: string;
   readonly raw: string;
   readonly location: SourceLocation;
 }
