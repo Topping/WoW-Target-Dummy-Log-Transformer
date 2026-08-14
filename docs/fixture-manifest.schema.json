@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "fixture-manifest.schema.json",
+  "title": "WoW Training Dummy Analyzer fixture manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "manifestVersion",
+    "qualificationProfile",
+    "captures",
+    "compactFixtures"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "manifestVersion": {
+      "const": 1
+    },
+    "qualificationProfile": {
+      "type": "object",
+      "required": ["id", "description"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "captures": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "path",
+          "provenance",
+          "purposes",
+          "observed",
+          "approvedGroundTruth"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^data/.+\\.txt$"
+          },
+          "provenance": {
+            "const": "real"
+          },
+          "purposes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          },
+          "observed": {
+            "type": "object",
+            "required": [
+              "bytes",
+              "sha256",
+              "records",
+              "timeRange",
+              "version",
+              "eventTypes"
+            ]
+          },
+          "approvedGroundTruth": {
+            "type": "object",
+            "required": [
+              "playerCharacters",
+              "recorderCandidateGuids",
+              "dummyCandidates"
+            ],
+            "properties": {
+              "playerCharacters": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/actor"
+                },
+                "minItems": 1
+              },
+              "recorderCandidateGuids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "dummyCandidates": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/actor"
+                }
+              },
+              "attempts": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/attempt"
+                }
+              },
+              "encounterEnvelopes": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "ownedEntities": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/actor"
+                }
+              },
+              "gapsMs": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "compactFixtures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "path",
+          "provenance",
+          "sourcePaths",
+          "purposes",
+          "sanitization"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "provenance": {
+            "enum": ["derived", "synthetic"]
+          },
+          "sourcePaths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "purposes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          },
+          "sanitization": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["guid", "name"],
+      "properties": {
+        "guid": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "attempt": {
+      "type": "object",
+      "required": [
+        "playerGuid",
+        "targetGuids",
+        "start",
+        "end",
+        "durationMs",
+        "qualifyingRecordCount"
+      ],
+      "properties": {
+        "playerGuid": {
+          "type": "string"
+        },
+        "targetGuids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "start": {
+          "type": "string"
+        },
+        "end": {
+          "type": "string"
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "qualifyingRecordCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxInternalGapMs": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

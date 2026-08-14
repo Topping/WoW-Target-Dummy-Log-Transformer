@@ -115,12 +115,30 @@ being an informal pile of example lines.
 
 ## D01 — Application foundation and stable contracts
 
-**Outcome:** A buildable, testable static application shell establishes the
-boundaries between core parser, worker, and UI.
+**Outcome:** A buildable, strictly typed, testable static application shell
+establishes the boundaries between core parser, worker, and UI and enforces its
+quality rules before changes are committed.
 
 **Scope**
 
-- Initialize TypeScript, Vite, Vitest, formatting/linting, and production build.
+- Initialize TypeScript, Vite, Vitest, formatting, type-aware linting, and the
+  production build.
+- Enable TypeScript strict mode plus appropriate additional safety options such
+  as `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`,
+  `useUnknownInCatchVariables`, and `noImplicitOverride`.
+- Configure type-aware ESLint rules that reject explicit `any`, unsafe values
+  propagated from `any`, unjustified TypeScript suppression comments, and unused
+  lint-disable directives. Use `unknown` plus validation/narrowing at untrusted
+  boundaries.
+- Add committed pre-commit hooks and staged-file tooling for formatting/linting,
+  plus a full typecheck before a commit is accepted. Hooks must be installed by
+  the normal package setup and work without a developer-specific global tool.
+- Provide one `npm run verify` command that runs formatting checks, linting,
+  typechecking, and tests; run the same command in a basic CI quality workflow so
+  bypassing a local hook cannot bypass repository policy.
+- Add a project-appropriate `.gitignore` for Node, Vite, TypeScript, coverage,
+  environment, editor, and OS artifacts. Do not use a broad `*.log` rule that
+  would hide combat-log fixtures.
 - Use React with Vite for the UI and record the boundary in a short architecture
   decision; the core and worker contracts must remain framework-independent.
 - Establish directories for `core`, `worker`, `ui`, tests, and documentation.
@@ -134,8 +152,13 @@ boundaries between core parser, worker, and UI.
 - The production output contains static assets only and makes no network request
   for parsing.
 - A smoke test imports core contracts without a browser or DOM environment.
+- `npm run verify` passes from a clean checkout, and deliberately introduced
+  explicit/unsafe `any` examples fail linting or typechecking.
+- The pre-commit hook runs automatically after normal dependency installation;
+  its commands are also directly runnable for debugging and CI.
 
-**Verification:** Typecheck, unit test, and production build.
+**Verification:** Hook installation smoke test, negative lint fixtures for
+explicit/unsafe `any`, `npm run verify`, and production build.
 
 **Dependencies:** None.
 

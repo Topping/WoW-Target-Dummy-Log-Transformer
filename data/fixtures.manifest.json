@@ -1,0 +1,752 @@
+{
+  "$schema": "../docs/fixture-manifest.schema.json",
+  "manifestVersion": 1,
+  "qualificationProfile": {
+    "id": "player-to-labelled-target-v1",
+    "description": "Direct selected-player records against a labelled target; duplicate SWING_DAMAGE_LANDED, terminal SPELL_AURA_REMOVED, and dose-only SPELL_AURA_APPLIED_DOSE records are excluded."
+  },
+  "captures": [
+    {
+      "id": "boss-encounter",
+      "path": "data/boss-encounter.txt",
+      "provenance": "real",
+      "purposes": [
+        "genuine-encounter-envelope",
+        "combatant-info",
+        "boss-exclusion"
+      ],
+      "observed": {
+        "bytes": 47102,
+        "sha256": "891bddac6892288794024bce55db5f30814775fcae01fe41b911d1175f197e78",
+        "records": 172,
+        "timeRange": {
+          "first": "8/14/2026 12:08:52.7962",
+          "last": "8/14/2026 12:10:05.5132"
+        },
+        "version": {
+          "logVersion": 22,
+          "advancedLoggingEnabled": true,
+          "buildVersion": "12.1.0",
+          "projectId": 1
+        },
+        "eventTypes": {
+          "COMBAT_LOG_VERSION": 1,
+          "COMBATANT_INFO": 2,
+          "ENCOUNTER_END": 2,
+          "ENCOUNTER_START": 2,
+          "MAP_CHANGE": 1,
+          "PARTY_KILL": 4,
+          "SPELL_AURA_APPLIED": 11,
+          "SPELL_AURA_APPLIED_DOSE": 5,
+          "SPELL_AURA_REFRESH": 3,
+          "SPELL_AURA_REMOVED": 10,
+          "SPELL_CAST_FAILED": 4,
+          "SPELL_CAST_START": 50,
+          "SPELL_CAST_SUCCESS": 53,
+          "SPELL_DAMAGE": 3,
+          "SPELL_ENERGIZE": 3,
+          "SPELL_MISSED": 1,
+          "SPELL_SUMMON": 1,
+          "SWING_DAMAGE": 2,
+          "SWING_DAMAGE_LANDED": 2,
+          "SWING_MISSED": 7,
+          "UNIT_DIED": 4,
+          "ZONE_CHANGE": 1
+        }
+      },
+      "approvedGroundTruth": {
+        "playerCharacters": [
+          {
+            "guid": "Player-3702-0A70D8DF",
+            "name": "Pølsefatter-ArgentDawn-EU"
+          }
+        ],
+        "recorderCandidateGuids": ["Player-3702-0A70D8DF"],
+        "dummyCandidates": [],
+        "encounterEnvelopes": [
+          {
+            "start": "8/14/2026 12:09:00.7772",
+            "end": "8/14/2026 12:09:04.8282",
+            "encounterId": 610,
+            "name": "Razorgore the Untamed",
+            "success": false
+          },
+          {
+            "start": "8/14/2026 12:09:57.5792",
+            "end": "8/14/2026 12:09:58.7942",
+            "encounterId": 610,
+            "name": "Razorgore the Untamed",
+            "success": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "cleave-logs",
+      "path": "data/cleave-logs.txt",
+      "provenance": "real",
+      "purposes": ["continuous-multi-target-attempt", "nearby-player-noise"],
+      "observed": {
+        "bytes": 2290979,
+        "sha256": "bd0f2cd5cf4308b3a9f8c5ed3f9dcc33486bc83d288e645b6592c2625eb26638",
+        "records": 7462,
+        "timeRange": {
+          "first": "8/14/2026 12:46:19.2612",
+          "last": "8/14/2026 12:48:04.9562"
+        },
+        "version": {
+          "logVersion": 22,
+          "advancedLoggingEnabled": true,
+          "buildVersion": "12.1.0",
+          "projectId": 1
+        },
+        "eventTypes": {
+          "COMBAT_LOG_VERSION": 1,
+          "ENVIRONMENTAL_DAMAGE": 1,
+          "MAP_CHANGE": 1,
+          "SPELL_AURA_APPLIED": 520,
+          "SPELL_AURA_APPLIED_DOSE": 622,
+          "SPELL_AURA_REFRESH": 985,
+          "SPELL_AURA_REMOVED": 421,
+          "SPELL_AURA_REMOVED_DOSE": 289,
+          "SPELL_CAST_FAILED": 91,
+          "SPELL_CAST_START": 37,
+          "SPELL_CAST_SUCCESS": 351,
+          "SPELL_DAMAGE": 2044,
+          "SPELL_ENERGIZE": 836,
+          "SPELL_HEAL": 222,
+          "SPELL_PERIODIC_DAMAGE": 812,
+          "SPELL_SUMMON": 7,
+          "SWING_DAMAGE": 110,
+          "SWING_DAMAGE_LANDED": 110,
+          "UNIT_DIED": 1,
+          "ZONE_CHANGE": 1
+        }
+      },
+      "approvedGroundTruth": {
+        "playerCharacters": [
+          {
+            "guid": "Player-3702-092FBB73",
+            "name": "Shadowrays-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0A6D7AF8",
+            "name": "Scorpiôn-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0A70D8DF",
+            "name": "Pølsefatter-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-09846A7A",
+            "name": "Snausbauss-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0AE45F37",
+            "name": "Chronomighty-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B5EAD88",
+            "name": "Achos-ArgentDawn-EU"
+          }
+        ],
+        "recorderCandidateGuids": ["Player-3702-0A70D8DF"],
+        "dummyCandidates": [
+          {
+            "guid": "Creature-0-1469-0-1615-243208-0001FED3AB",
+            "name": "Cleave Training Dummy"
+          },
+          {
+            "guid": "Creature-0-1469-0-1615-243208-00017ED3AB",
+            "name": "Cleave Training Dummy"
+          },
+          {
+            "guid": "Creature-0-1469-0-1615-243208-00007ED3AB",
+            "name": "Cleave Training Dummy"
+          },
+          {
+            "guid": "Creature-0-1469-0-1615-243208-0000FED3AB",
+            "name": "Cleave Training Dummy"
+          },
+          {
+            "guid": "Creature-0-1469-0-1615-243208-00027ED3AB",
+            "name": "Cleave Training Dummy"
+          }
+        ],
+        "attempts": [
+          {
+            "playerGuid": "Player-3702-0A70D8DF",
+            "targetGuids": [
+              "Creature-0-1469-0-1615-243208-00007ED3AB",
+              "Creature-0-1469-0-1615-243208-0000FED3AB",
+              "Creature-0-1469-0-1615-243208-00017ED3AB",
+              "Creature-0-1469-0-1615-243208-0001FED3AB",
+              "Creature-0-1469-0-1615-243208-00027ED3AB"
+            ],
+            "start": "8/14/2026 12:46:23.3732",
+            "end": "8/14/2026 12:47:50.7862",
+            "durationMs": 87413,
+            "qualifyingRecordCount": 913,
+            "maxInternalGapMs": 1974
+          }
+        ]
+      }
+    },
+    {
+      "id": "dummy-encounter",
+      "path": "data/dummy-encounter.txt",
+      "provenance": "real",
+      "purposes": [
+        "noisy-single-target-attempt",
+        "owned-risen-ghoul",
+        "unicode",
+        "advanced-fields"
+      ],
+      "observed": {
+        "bytes": 28880428,
+        "sha256": "7d157745c171e48dad2926fad3998f08d2b3dc7dd0c616172ece33e57ecd2f35",
+        "records": 89921,
+        "timeRange": {
+          "first": "8/14/2026 11:47:33.8072",
+          "last": "8/14/2026 11:56:44.0452"
+        },
+        "version": {
+          "logVersion": 22,
+          "advancedLoggingEnabled": true,
+          "buildVersion": "12.1.0",
+          "projectId": 1
+        },
+        "eventTypes": {
+          "COMBAT_LOG_VERSION": 1,
+          "ENVIRONMENTAL_DAMAGE": 2,
+          "MAP_CHANGE": 1,
+          "SPELL_ABSORBED": 9,
+          "SPELL_AURA_APPLIED": 4210,
+          "SPELL_AURA_APPLIED_DOSE": 6479,
+          "SPELL_AURA_REFRESH": 6545,
+          "SPELL_AURA_REMOVED": 3474,
+          "SPELL_AURA_REMOVED_DOSE": 2782,
+          "SPELL_CAST_FAILED": 954,
+          "SPELL_CAST_START": 1328,
+          "SPELL_CAST_SUCCESS": 3874,
+          "SPELL_DAMAGE": 42159,
+          "SPELL_ENERGIZE": 4294,
+          "SPELL_HEAL": 933,
+          "SPELL_HEAL_ABSORBED": 69,
+          "SPELL_MISSED": 18,
+          "SPELL_PERIODIC_DAMAGE": 3897,
+          "SPELL_PERIODIC_ENERGIZE": 71,
+          "SPELL_PERIODIC_HEAL": 313,
+          "SPELL_SUMMON": 628,
+          "SWING_DAMAGE": 3015,
+          "SWING_DAMAGE_LANDED": 4659,
+          "SWING_MISSED": 7,
+          "UNIT_DIED": 198,
+          "ZONE_CHANGE": 1
+        }
+      },
+      "approvedGroundTruth": {
+        "playerCharacters": [
+          {
+            "guid": "Player-3702-0A386116",
+            "name": "Plumbster-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0628A59A",
+            "name": "Eikou-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B4ABFA2",
+            "name": "Voidtoast-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-098E61B7",
+            "name": "Manaira-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0A70D8DF",
+            "name": "Pølsefatter-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0ADA6542",
+            "name": "Exsanguia-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B19798E",
+            "name": "Alustryel-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B554CF5",
+            "name": "Vødka-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0AD43D87",
+            "name": "Greshammer-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-08C454F2",
+            "name": "Warjoy-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B545F27",
+            "name": "Blyse-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0AFC31A2",
+            "name": "Oakenborn-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B5E6E9B",
+            "name": "Cursewa-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0A3F3B61",
+            "name": "Illnath-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B5F5356",
+            "name": "Flexxed-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B5F1C20",
+            "name": "Blumbee-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0A988424",
+            "name": "Hanzík-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0A91B771",
+            "name": "Eruruu-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0717CA21",
+            "name": "Divinus-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B4FED62",
+            "name": "Lornen-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0AF5E3C7",
+            "name": "Goonerxo-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0AF82C52",
+            "name": "Pathologian-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B2619E2",
+            "name": "Damnzw-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B1FF380",
+            "name": "Sêddy-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B5A9B60",
+            "name": "Táíga-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B294A69",
+            "name": "Iniuriae-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B52013E",
+            "name": "Mistcleaver-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-09886C08",
+            "name": "Burena-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0A963F91",
+            "name": "Lunadrith-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0A71582B",
+            "name": "Saralain-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-062B102A",
+            "name": "Whitesun-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0A71CEFC",
+            "name": "Veñom-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B5E4EC4",
+            "name": "Lathimasu-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-08EDBC69",
+            "name": "Serbaelor-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B2DF46A",
+            "name": "Babalac-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B4BFE1C",
+            "name": "Ræøûl-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0A697E66",
+            "name": "Izulthir-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-06167B13",
+            "name": "Marcusmaximi-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-580-092F06A8",
+            "name": "Juyi-Tichondrius-EU"
+          },
+          {
+            "guid": "Player-3702-0A706466",
+            "name": "Roguedrigues-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0ADABF61",
+            "name": "Cengâver-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B3D3FBC",
+            "name": "Horrim-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0A9D66DD",
+            "name": "Woonkye-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B58BFA0",
+            "name": "Cyrage-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3391-0D7701AB",
+            "name": "Frostrationa-Silvermoon-EU"
+          },
+          {
+            "guid": "Player-3702-0AB55000",
+            "name": "Wreckthar-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B2E962A",
+            "name": "Thehappy-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B54F3BC",
+            "name": "Nyxtyar-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B3EB454",
+            "name": "Larenthía-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-076DFDCC",
+            "name": "Itselbis-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0A5F1594",
+            "name": "Awareil-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0AF53C60",
+            "name": "Scotchio-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B5C3CF6",
+            "name": "Vellexîa-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0A880607",
+            "name": "Jorrdan-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-08281DF7",
+            "name": "Inferíae-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B3A7AC4",
+            "name": "Cimbaa-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B5F44C9",
+            "name": "Nomoresorrow-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0A208D46",
+            "name": "Rainbowdrops-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3391-0D5BE34D",
+            "name": "Daevok-Silvermoon-EU"
+          },
+          {
+            "guid": "Player-3391-0D6585CB",
+            "name": "Tealush-Silvermoon-EU"
+          },
+          {
+            "guid": "Player-3702-0A46B0E4",
+            "name": "Ellgibbo-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0B25B838",
+            "name": "Tazrick-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-1390-0C5324E6",
+            "name": "Viriòn-Hyjal-EU"
+          },
+          {
+            "guid": "Player-3702-0B41596E",
+            "name": "Zarbosh-ArgentDawn-EU"
+          }
+        ],
+        "recorderCandidateGuids": ["Player-3702-0A70D8DF"],
+        "dummyCandidates": [
+          {
+            "guid": "Creature-0-3890-0-78-243208-0001FE6EA6",
+            "name": "Cleave Training Dummy"
+          },
+          {
+            "guid": "Creature-0-3890-0-78-243208-00017E6EA6",
+            "name": "Cleave Training Dummy"
+          },
+          {
+            "guid": "Creature-0-3890-0-78-243208-00027E6EA6",
+            "name": "Cleave Training Dummy"
+          },
+          {
+            "guid": "Creature-0-3890-0-78-243208-0000FE6EA6",
+            "name": "Cleave Training Dummy"
+          },
+          {
+            "guid": "Creature-0-3890-0-78-243208-00007E6EA6",
+            "name": "Cleave Training Dummy"
+          },
+          {
+            "guid": "Creature-0-3890-0-78-243168-00007E6EA6",
+            "name": "Dungeoneer's Training Dummy"
+          },
+          {
+            "guid": "Creature-0-3890-0-78-243167-00007E6EA6",
+            "name": "Dungeoneer's Training Dummy"
+          },
+          {
+            "guid": "Creature-0-3890-0-78-243214-00007E6EA6",
+            "name": "Training Dummy"
+          },
+          {
+            "guid": "Creature-0-3890-0-78-243207-00007E6EA6",
+            "name": "Training Dummy"
+          },
+          {
+            "guid": "Creature-0-3890-0-78-243166-00007E6EA6",
+            "name": "Normal Tank Dummy"
+          },
+          {
+            "guid": "Creature-0-3890-0-78-243211-0000FE6EA6",
+            "name": "PvP Training Dummy"
+          },
+          {
+            "guid": "Creature-0-3890-0-78-243212-00007E6EA6",
+            "name": "PvP Training Dummy"
+          }
+        ],
+        "attempts": [
+          {
+            "playerGuid": "Player-3702-0A70D8DF",
+            "targetGuids": ["Creature-0-3890-0-78-243168-00007E6EA6"],
+            "start": "8/14/2026 11:47:38.3082",
+            "end": "8/14/2026 11:51:36.5472",
+            "durationMs": 238239,
+            "qualifyingRecordCount": 1531
+          }
+        ],
+        "ownedEntities": [
+          {
+            "name": "Risen Ghoul",
+            "guid": "Creature-0-3890-0-78-26125-00007EE43B"
+          },
+          {
+            "name": "Risen Ghoul",
+            "guid": "Creature-0-3890-0-78-26125-00007EE495"
+          },
+          {
+            "name": "Risen Ghoul",
+            "guid": "Creature-0-3890-0-78-26125-00007EE4EF"
+          }
+        ]
+      }
+    },
+    {
+      "id": "session-splitting",
+      "path": "data/session-splitting.txt",
+      "provenance": "real",
+      "purposes": ["inactivity-gap-splitting", "nearby-player-noise"],
+      "observed": {
+        "bytes": 1406938,
+        "sha256": "db2d8994295fec66f52408b966f069470315d06b786995e7155f4a5d582559f1",
+        "records": 4591,
+        "timeRange": {
+          "first": "8/14/2026 12:48:57.7862",
+          "last": "8/14/2026 12:50:45.7212"
+        },
+        "version": {
+          "logVersion": 22,
+          "advancedLoggingEnabled": true,
+          "buildVersion": "12.1.0",
+          "projectId": 1
+        },
+        "eventTypes": {
+          "COMBAT_LOG_VERSION": 1,
+          "MAP_CHANGE": 1,
+          "SPELL_AURA_APPLIED": 350,
+          "SPELL_AURA_APPLIED_DOSE": 233,
+          "SPELL_AURA_REFRESH": 839,
+          "SPELL_AURA_REMOVED": 295,
+          "SPELL_AURA_REMOVED_DOSE": 159,
+          "SPELL_CAST_START": 3,
+          "SPELL_CAST_SUCCESS": 190,
+          "SPELL_DAMAGE": 1244,
+          "SPELL_EMPOWER_END": 1,
+          "SPELL_EMPOWER_START": 2,
+          "SPELL_ENERGIZE": 289,
+          "SPELL_HEAL": 144,
+          "SPELL_PERIODIC_DAMAGE": 601,
+          "SPELL_SUMMON": 10,
+          "SWING_DAMAGE": 113,
+          "SWING_DAMAGE_LANDED": 113,
+          "SWING_MISSED": 1,
+          "UNIT_DIED": 1,
+          "ZONE_CHANGE": 1
+        }
+      },
+      "approvedGroundTruth": {
+        "playerCharacters": [
+          {
+            "guid": "Player-3702-0A6D7AF8",
+            "name": "Scorpiôn-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-092FBB73",
+            "name": "Shadowrays-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0A70D8DF",
+            "name": "Pølsefatter-ArgentDawn-EU"
+          },
+          {
+            "guid": "Player-3702-0AE45F37",
+            "name": "Chronomighty-ArgentDawn-EU"
+          }
+        ],
+        "recorderCandidateGuids": ["Player-3702-0A70D8DF"],
+        "dummyCandidates": [
+          {
+            "guid": "Creature-0-1469-0-1615-243208-00017ED3AB",
+            "name": "Cleave Training Dummy"
+          },
+          {
+            "guid": "Creature-0-1469-0-1615-243208-00007ED3AB",
+            "name": "Cleave Training Dummy"
+          },
+          {
+            "guid": "Creature-0-1469-0-1615-243208-0001FED3AB",
+            "name": "Cleave Training Dummy"
+          },
+          {
+            "guid": "Creature-0-1469-0-1615-243208-00027ED3AB",
+            "name": "Cleave Training Dummy"
+          },
+          {
+            "guid": "Creature-0-1469-0-1615-243208-0000FED3AB",
+            "name": "Cleave Training Dummy"
+          },
+          {
+            "guid": "Creature-0-1469-0-1615-243167-00007ED3AB",
+            "name": "Dungeoneer's Training Dummy"
+          }
+        ],
+        "attempts": [
+          {
+            "playerGuid": "Player-3702-0A70D8DF",
+            "targetGuids": ["Creature-0-1469-0-1615-243167-00007ED3AB"],
+            "start": "8/14/2026 12:49:00.8762",
+            "end": "8/14/2026 12:49:04.0662",
+            "durationMs": 3190,
+            "qualifyingRecordCount": 3
+          },
+          {
+            "playerGuid": "Player-3702-0A70D8DF",
+            "targetGuids": ["Creature-0-1469-0-1615-243167-00007ED3AB"],
+            "start": "8/14/2026 12:49:24.3302",
+            "end": "8/14/2026 12:49:27.5752",
+            "durationMs": 3245,
+            "qualifyingRecordCount": 5
+          },
+          {
+            "playerGuid": "Player-3702-0A70D8DF",
+            "targetGuids": ["Creature-0-1469-0-1615-243167-00007ED3AB"],
+            "start": "8/14/2026 12:50:01.0642",
+            "end": "8/14/2026 12:50:01.1762",
+            "durationMs": 112,
+            "qualifyingRecordCount": 4
+          },
+          {
+            "playerGuid": "Player-3702-0A70D8DF",
+            "targetGuids": ["Creature-0-1469-0-1615-243167-00007ED3AB"],
+            "start": "8/14/2026 12:50:26.3062",
+            "end": "8/14/2026 12:50:26.5722",
+            "durationMs": 266,
+            "qualifyingRecordCount": 3
+          }
+        ],
+        "gapsMs": [20264, 33489, 25130]
+      }
+    }
+  ],
+  "compactFixtures": [
+    {
+      "id": "current-retail-samples",
+      "path": "tests/fixtures/derived/current-retail-samples.log",
+      "provenance": "derived",
+      "sourcePaths": ["data/cleave-logs.txt", "data/dummy-encounter.txt"],
+      "purposes": [
+        "timestamp-precision",
+        "csv",
+        "unicode",
+        "advanced-fields",
+        "summon",
+        "unknown-event"
+      ],
+      "sanitization": "The unsupported heal-absorbed example replaces a nearby player's identity; other retained lines belong to the recorder."
+    },
+    {
+      "id": "encounter-envelope",
+      "path": "tests/fixtures/derived/encounter-envelope.log",
+      "provenance": "derived",
+      "sourcePaths": ["data/boss-encounter.txt"],
+      "purposes": ["encounter-metadata", "combatant-info"],
+      "sanitization": "The COMBATANT_INFO payload is reduced to representative list shapes."
+    },
+    {
+      "id": "external-effect",
+      "path": "tests/fixtures/synthetic/external-effect.log",
+      "provenance": "synthetic",
+      "sourcePaths": [],
+      "purposes": ["minimal-isolated", "external-effect", "unicode"],
+      "sanitization": "All actors, GUIDs, spells, and values are invented test data."
+    },
+    {
+      "id": "missing-ownership",
+      "path": "tests/fixtures/synthetic/missing-ownership.log",
+      "provenance": "synthetic",
+      "sourcePaths": [],
+      "purposes": ["summon", "missing-ownership-evidence"],
+      "sanitization": "All actors, GUIDs, and values are invented test data."
+    }
+  ]
+}

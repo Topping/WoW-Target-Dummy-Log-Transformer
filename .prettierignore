@@ -1,0 +1,7 @@
+coverage/
+dist/
+node_modules/
+data/*.txt
+package-lock.json
+spec.md
+docs/delivery-plan.md
