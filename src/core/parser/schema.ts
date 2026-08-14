@@ -455,6 +455,7 @@ const RETAIL_12_1_0_DEFINITIONS = definitions([
   ["SPELL_CAST_SUCCESS", "cast", 11, 11],
   ["SPELL_CAST_FAILED", "cast", 12, 12],
   ["SPELL_DAMAGE", "damage", 11, 11],
+  ["SPELL_DAMAGE_SUPPORT", "damage", 11, 11],
   ["SPELL_PERIODIC_DAMAGE", "damage", 11, 11],
   ["SWING_DAMAGE", "damage", 8, 8],
   ["SWING_DAMAGE_LANDED", "damage", 8, 8],
