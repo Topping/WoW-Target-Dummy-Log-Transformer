@@ -19,9 +19,8 @@ and Playwright engine-proxy workflows, axe accessibility automation, and a
 narrow-viewport smoke test.
 D11 adds a gated four-file GitHub Pages artifact, repository-scoped production
 browser validation, repeatable deployment and post-deployment smoke workflows,
-and an explicit release/sign-off/rollback checklist. The public Pages site is
-not yet deployed: repository metadata reported Pages disabled and the expected
-URL returned 404 when D11 was prepared.
+and an explicit release/sign-off/rollback checklist. The application is live at
+[`topping.github.io/WoW-Target-Dummy-Log-Transformer`](https://topping.github.io/WoW-Target-Dummy-Log-Transformer/).
 
 ## Development
 
@@ -62,8 +61,8 @@ D10 measurements, browser-version distinctions, accessibility results, privacy
 audit, defaults, and genuine gaps are in
 [`docs/d10-hardening.md`](docs/d10-hardening.md).
 The D11 deployment prerequisites, exact validation commands, artifact contract,
-coverage matrix, accepted limitations, rollback steps, and pending external
-sign-off are in
+coverage matrix, accepted limitations, rollback steps, and deployed evidence
+are in
 [`docs/d11-release-checklist.md`](docs/d11-release-checklist.md).
 
 The production build in `dist/` contains only static HTML, CSS, JavaScript, and

@@ -231,7 +231,9 @@ Edge, installed Firefox, or installed Safari certification. The workflow adds
 no router, backend, persistence, analytics, PWA, or service worker.
 
 At D11 implementation time GitHub's public metadata reported Pages disabled and
-the expected URL returned 404. Repository-owner enablement, the first pushed
-workflow, and deployed evidence are external prerequisites and must remain
-marked pending until actually observed. The complete release, sign-off, and
-rollback record is [`d11-release-checklist.md`](d11-release-checklist.md).
+the expected URL returned 404. After repository-owner enablement, release commit
+`7c9ff05c38dc1f3a4d11674bf4371e56a7ef72c7` passed Quality, artifact validation,
+deployment, the deployed proxy-engine smoke, and an additional deployed genuine
+installed-Chrome smoke. The live URL returned HTTP 200. The complete release,
+sign-off, and rollback record is
+[`d11-release-checklist.md`](d11-release-checklist.md).

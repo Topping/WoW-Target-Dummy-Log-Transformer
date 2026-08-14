@@ -518,10 +518,10 @@ assertions, accessibility automation, and manual checklist.
 
 ## D11 — GitHub Pages release
 
-**Implementation:** Release automation and local repository-scoped validation
-are complete on the current working tree. First deployment and its signed
-external evidence remain pending because GitHub Pages is currently disabled and
-the expected public URL returns 404. See
+**Implementation:** Complete. Release commit
+`7c9ff05c38dc1f3a4d11674bf4371e56a7ef72c7` passed Quality, repository-scoped
+validation, deployment, deployed proxy-engine smoke, and an additional deployed
+installed-Chrome smoke. The public URL returned HTTP 200. See
 [`d11-release-checklist.md`](d11-release-checklist.md).
 
 **Outcome:** v0.2 is available from a static URL with a repeatable release
@@ -596,10 +596,8 @@ an informed decision about a future synthetic export.
 These items should be resolved in the owning chunk and recorded as an ADR,
 fixture label, or test—not left as undocumented implementation assumptions:
 
-None for D00-D10. D11's local decisions and validation are now recorded. Its
-remaining evidence is external: a pushed successful Pages workflow, the
-returned deployed URL, post-deployment proxy-engine smoke results, and
-repository-owner sign-off.
+None for D00-D11. D11's local and deployed evidence is recorded in the signed
+release checklist.
 
 The D05 defaults are now validated: the 10-second threshold produces the four
 approved split groups and preserves the 87.413-second cleave group, while the
@@ -742,11 +740,11 @@ direct-load and complete real-cleave/export/privacy smoke.
 
 GitHub Pages repository enablement is not inferred from local code. At the D11
 implementation checkpoint public metadata reported `has_pages: false` and the
-expected URL returned HTTP 404. The owner must enable GitHub Actions as the
-Pages source before the first run, run the workflow, and complete the signed
-evidence record in [`d11-release-checklist.md`](d11-release-checklist.md).
-Playwright Firefox/WebKit remain proxies and do not change D10's actual-browser
-gaps.
+expected URL returned HTTP 404. The owner then enabled GitHub Actions as the
+Pages source. Release commit `7c9ff05c38dc1f3a4d11674bf4371e56a7ef72c7`
+passed both workflows, the returned URL served HTTP 200, and both the deployed
+proxy smoke and deployed installed-Chrome smoke passed. Playwright
+Firefox/WebKit remain proxies and do not change D10's actual-browser gaps.
 
 ## Suggested first implementation slice
 

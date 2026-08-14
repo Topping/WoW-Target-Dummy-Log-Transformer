@@ -1,15 +1,13 @@
 # D11 static GitHub Pages release
 
 - **Prepared:** 2026-08-14
-- **Expected URL:**
+- **Deployed URL:**
   `https://topping.github.io/WoW-Target-Dummy-Log-Transformer/`
 - **Repository path:** `/WoW-Target-Dummy-Log-Transformer/`
-- **Local implementation status:** release automation and repository-scoped
-  production validation are implemented.
-- **External deployment status at preparation:** not deployed. The public
-  repository metadata reported `has_pages: false`, the Pages API returned 404,
-  and the expected URL returned HTTP 404. A pushed workflow run and repository
-  owner action are still required.
+- **Release status:** deployed and verified. Quality, repository-scoped
+  validation, deployment, deployed proxy-engine smoke, and deployed genuine
+  installed-Chrome smoke passed for release commit
+  `7c9ff05c38dc1f3a4d11674bf4371e56a7ef72c7`.
 
 This is the release checklist and evidence record for D11. It does not replace
 the D10 measurements or broaden their browser-certification claims.
@@ -154,22 +152,44 @@ repository-relative application assets and worker, accessibility states, the
 real five-target workflow, downloaded-content assertions, and privacy checks.
 These are local production-artifact results, not deployed-URL evidence.
 
+## First deployment evidence
+
+The repository owner selected GitHub Actions as the Pages source and explicitly
+authorized publication. Commit
+`7c9ff05c38dc1f3a4d11674bf4371e56a7ef72c7` was pushed to `main` on 2026-08-14.
+
+- [Quality run 31808021980](https://github.com/Topping/WoW-Target-Dummy-Log-Transformer/actions/runs/31808021980):
+  passed.
+- [GitHub Pages run 31808022101](https://github.com/Topping/WoW-Target-Dummy-Log-Transformer/actions/runs/31808022101):
+  `validate`, `deploy`, and `smoke-deployed` all passed.
+- The deployed URL returned HTTP 200 with a `Last-Modified` value tied to the
+  first deployment.
+- The deployed CI smoke completed direct load, refresh, the full real-cleave
+  file-to-both-exports workflow, accessibility checks, and privacy checks in
+  Playwright Chromium, Firefox, and WebKit proxies.
+- A separate deployed run in the genuinely installed headless Chrome 151 binary
+  passed both `pages-release.spec.ts` and `workflow.spec.ts` (2/2).
+
+This is genuine deployed-URL evidence. The proxy labels retain their D10
+limitations and are not actual Edge, installed Firefox, or installed Safari
+certification.
+
 ## v0.2 release coverage matrix
 
-| Capability                                             | Release evidence                                                                 | Status before first deployment                |
-| ------------------------------------------------------ | -------------------------------------------------------------------------------- | --------------------------------------------- |
-| Static browser app and local-only privacy              | Four-file artifact audit, production privacy audit, visible privacy card/footer  | Locally satisfied                             |
-| Streaming, responsive, cancellable progress            | D04 worker tests, D10 capture-wide/performance and heartbeat suites              | Satisfied by D10; preserved                   |
-| Current Retail parser, Unicode, unknown events         | Compact and explicitly named capture-wide parser suites                          | Satisfied by D02-D03; preserved               |
-| Character/target/attempt discovery and splitting       | Discovery unit and approved-ground-truth capture-wide suites                     | Satisfied by D05; preserved                   |
-| Extraction, ownership, external effects, filtering     | Extraction and ownership tests plus capture-wide profiles                        | Satisfied by D06; preserved                   |
-| JSON and filtered-log exports                          | Schema/round-trip tests and downloaded-content assertions in production browsers | Locally satisfied                             |
-| Non-technical complete workflow and errors             | React tests and Playwright real-cleave/recovery suites                           | Locally satisfied                             |
-| Parser tests independent of UI                         | `npm run verify` compact/capture-wide/performance routing                        | Satisfied; preserved                          |
-| Accessibility                                          | D10 axe/keyboard/focus/narrow-view evidence in installed Chrome and proxies      | Satisfied within documented automation limits |
-| Repository-scoped assets, worker, direct load, refresh | Artifact audit plus `pages-release.spec.ts` at the exact base path               | Locally satisfied                             |
-| Deployed static URL and post-deploy workflow           | Pages deployment output and `smoke-deployed` job                                 | Pending first deployment                      |
-| Synthetic encounter work                               | Explicitly outside D11                                                           | Not part of v0.2 release                      |
+| Capability                                             | Release evidence                                                                 | Release status                                      |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Static browser app and local-only privacy              | Four-file artifact audit, production privacy audit, visible privacy card/footer  | Satisfied locally and deployed                      |
+| Streaming, responsive, cancellable progress            | D04 worker tests, D10 capture-wide/performance and heartbeat suites              | Satisfied by D10; preserved                         |
+| Current Retail parser, Unicode, unknown events         | Compact and explicitly named capture-wide parser suites                          | Satisfied by D02-D03; preserved                     |
+| Character/target/attempt discovery and splitting       | Discovery unit and approved-ground-truth capture-wide suites                     | Satisfied by D05; preserved                         |
+| Extraction, ownership, external effects, filtering     | Extraction and ownership tests plus capture-wide profiles                        | Satisfied by D06; preserved                         |
+| JSON and filtered-log exports                          | Schema/round-trip tests and downloaded-content assertions in production browsers | Satisfied locally and deployed                      |
+| Non-technical complete workflow and errors             | React tests and Playwright real-cleave/recovery suites                           | Satisfied locally and deployed                      |
+| Parser tests independent of UI                         | `npm run verify` compact/capture-wide/performance routing                        | Satisfied; preserved                                |
+| Accessibility                                          | D10 axe/keyboard/focus/narrow-view evidence in installed Chrome and proxies      | Satisfied locally/deployed within automation limits |
+| Repository-scoped assets, worker, direct load, refresh | Artifact audit plus `pages-release.spec.ts` at the exact base path               | Satisfied locally and deployed                      |
+| Deployed static URL and post-deploy workflow           | Pages deployment output and successful `smoke-deployed` job                      | Satisfied                                           |
+| Synthetic encounter work                               | Explicitly outside D11                                                           | Not part of v0.2 release                            |
 
 ## Browser and privacy evidence to record
 
@@ -217,9 +237,8 @@ source code, repository metadata, source maps, environment files, or captures.
   high-contrast mode, and broader zoom/reflow remain unverified.
 - Current performance/budget evidence is tied to the D10 host, fixtures, and
   versions and is not a universal performance promise.
-- GitHub Pages availability, repository settings, CDN behavior, and the
-  post-deployment URL cannot be truthfully verified until an authorized push
-  and successful first deployment occur.
+- The deployed URL and GitHub CDN response were verified. Owner-only branch and
+  environment protection details remain outside the unauthenticated checkout.
 
 ## Rollback
 
@@ -242,16 +261,15 @@ and re-enable only after the replacement workflow passes.
 
 ## Release sign-off
 
-The checklist is not signed until the external fields are filled from a real
-successful run:
-
 ```text
-Release commit SHA:      PENDING
-Quality workflow URL:    PENDING
-Pages workflow URL:      PENDING
-Deployed URL:            PENDING (currently HTTP 404)
-Post-deploy proxy smoke: PENDING
-Release owner/signature: PENDING
-Signed date/time (UTC):  PENDING
-Rollback commit SHA:     PENDING (fill only if rollback is used)
+Release commit SHA:      7c9ff05c38dc1f3a4d11674bf4371e56a7ef72c7
+Quality workflow URL:    https://github.com/Topping/WoW-Target-Dummy-Log-Transformer/actions/runs/31808021980
+Pages workflow URL:      https://github.com/Topping/WoW-Target-Dummy-Log-Transformer/actions/runs/31808022101
+Deployed URL:            https://topping.github.io/WoW-Target-Dummy-Log-Transformer/
+Post-deploy proxy smoke: PASSED
+Installed Chrome smoke:  PASSED (2/2, HeadlessChrome/151.0.0.0)
+Release authorization:   Repository owner explicitly authorized commit and push in the task conversation
+Evidence recorded by:    Codex; this is an evidence sign-off, not a cryptographic signature
+Signed date/time (UTC):  2026-08-14 14:13
+Rollback commit SHA:     NOT USED
 ```
