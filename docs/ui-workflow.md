@@ -84,12 +84,16 @@ context behind a detail disclosure.
 
 The result includes a **Character profile** form before the selected character,
 duration, target context, and primary **Download encounter log** action. The
-form accepts text only on explicit **Use profile** submission, never on each
-keystroke. It explains that `/simc` supplies character metadata only and that
-all combat activity remains combat-log-derived. Accepted text is reduced to a
-sanitized character/class/spec/equipment-count summary; raw profile text is not
-shown in technical details, persisted, or sent to the worker. A user can replace
-or remove the profile.
+collapsed disclosure says that SimulationCraft addon output is required, so the
+next step remains visible before and after the form is expanded. The expanded
+guidance tells users to install the addon before recording, run `/simc` on the
+recorded character, and paste all of its output. The form accepts text only on
+explicit **Use profile** submission, never on each keystroke. It explains that
+`/simc` supplies character metadata only and that all combat activity remains
+combat-log-derived. Accepted text is reduced to a sanitized
+character/class/spec/equipment-count summary; raw profile text is not shown in
+technical details, persisted, or sent to the worker. A user can replace or
+remove the profile.
 
 Profile metadata is held only in application memory and keyed to the selected
 player GUID. It survives choosing another attempt for that player, is not reused
