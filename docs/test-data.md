@@ -22,6 +22,13 @@ Combat Logging enabled, and four fractional timestamp digits. Raw captures are
 development-only test material: do not publish them outside the repository or
 add captures without the permission of the recorder and visible participants.
 
+D11 enforces that boundary in the built form. The Pages upload is `dist/` only,
+and its audit requires exactly the HTML entry, hashed CSS/application entries,
+and hashed parser worker. Any capture/log file or extra artifact entry fails;
+representative approved real-capture identities are also rejected if embedded
+in a bundle. The Pages artifact regression itself creates only temporary
+synthetic static files and never reads a real capture.
+
 ## Real captures
 
 | Fixture                      | Size / records / range                                        | Purpose and approved result                                                                                                                                                                                                                                                                                      |

@@ -139,3 +139,13 @@ file size, and tie extraction's last read value to its filtering audit. The
 production build must emit a separate parser worker, while a large-capture
 25 ms browser heartbeat guards against main-thread parsing. Measurements and
 browser limitations are in [`d10-hardening.md`](d10-hardening.md).
+
+## D11 repository-scoped worker validation
+
+The Pages artifact audit requires exactly one hashed
+`assets/parser.worker-*.js` file and verifies that the application bundle names
+it. Playwright mounts the unchanged `dist/` at
+`/WoW-Target-Dummy-Log-Transformer/` and requires discovery to request that
+worker with a same-origin bodyless GET below the same repository path. The
+deployed smoke repeats the real-cleave workflow against GitHub's returned Pages
+URL. No worker fallback, inline parser, or network transport was added for D11.

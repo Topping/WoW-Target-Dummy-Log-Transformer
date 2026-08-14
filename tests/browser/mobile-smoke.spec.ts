@@ -4,7 +4,7 @@ test("narrow desktop/mobile-sized viewport remains operable without horizontal o
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
+  await page.goto("./");
   await expect(
     page.getByRole("button", { name: "Choose a combat log" }),
   ).toBeVisible();

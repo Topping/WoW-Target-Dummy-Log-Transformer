@@ -3,7 +3,7 @@
 A privacy-preserving browser application for extracting one character's
 training-dummy attempt from a noisy World of Warcraft Retail combat log.
 
-The current D00-D10 implementation provides the characterized fixture set, shared
+The current D00-D11 implementation provides the characterized fixture set, shared
 TypeScript contracts, incremental UTF-8/line/CSV parser primitives, a registered
 Retail 12.1.0 combat-log schema, canonical events and actors, the typed worker
 boundary and lifecycle, bounded player/target/session discovery, detailed
@@ -17,6 +17,11 @@ D10 adds measured retained-data/export safety limits, production worker and
 privacy audits, explicit capture-wide performance regressions, installed-Chrome
 and Playwright engine-proxy workflows, axe accessibility automation, and a
 narrow-viewport smoke test.
+D11 adds a gated four-file GitHub Pages artifact, repository-scoped production
+browser validation, repeatable deployment and post-deployment smoke workflows,
+and an explicit release/sign-off/rollback checklist. The public Pages site is
+not yet deployed: repository metadata reported Pages disabled and the expected
+URL returned 404 when D11 was prepared.
 
 ## Development
 
@@ -28,9 +33,12 @@ npm run dev
 npm run verify
 npm run build
 npm run audit:production
+npm run audit:pages
 npx playwright install chromium firefox webkit
 npm run test:browser:proxies
 npm run test:browser:chrome
+npm run test:browser:pages:proxies
+npm run test:browser:pages:chrome
 npm run preview
 ```
 
@@ -53,7 +61,12 @@ The concrete UI state machine and interactions are documented in
 D10 measurements, browser-version distinctions, accessibility results, privacy
 audit, defaults, and genuine gaps are in
 [`docs/d10-hardening.md`](docs/d10-hardening.md).
+The D11 deployment prerequisites, exact validation commands, artifact contract,
+coverage matrix, accepted limitations, rollback steps, and pending external
+sign-off are in
+[`docs/d11-release-checklist.md`](docs/d11-release-checklist.md).
 
-The production build in `dist/` contains only static HTML, CSS, and JavaScript.
+The production build in `dist/` contains only static HTML, CSS, JavaScript, and
+the separately emitted JavaScript parser worker.
 Combat logs remain in the browser: there is no backend, analytics, persistence,
-router, or external state-management layer.
+router, service worker, or external state-management layer.

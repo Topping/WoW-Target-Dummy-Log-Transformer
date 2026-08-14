@@ -183,6 +183,12 @@ empty, and no service-worker registration exists. Downloads use temporary
 - `npm run audit:production` audits an existing `dist`; `npm run build` creates
   it.
 
+D11 reuses this evidence without relabelling it. Its Pages workflow adds an
+exact artifact allowlist and repository-scoped/deployed proxy-engine smoke, but
+does not turn Playwright Firefox or WebKit into installed Firefox or Safari
+certification. Release-specific evidence and pending external sign-off are in
+[`d11-release-checklist.md`](d11-release-checklist.md).
+
 The regressions cover whole-file/event retention, discovery normalization,
 post-roll early stopping, truthful cumulative byte progress, separate worker
 emission/main-thread responsiveness, cancellation and stale completion,

@@ -17,7 +17,7 @@ const SELF_BUFF =
 test("explicit character selection and no-session recovery remain usable", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("./");
   const input = page.locator('input[type="file"]');
   await input.setInputFiles({
     name: "multiple.log",
@@ -61,7 +61,7 @@ test("explicit character selection and no-session recovery remain usable", async
 });
 
 test("retry and replacement-file recovery remain usable", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("./");
   const input = page.locator('input[type="file"]');
 
   await input.setInputFiles({
@@ -99,7 +99,7 @@ test("large-capture cancellation suppresses stale completion and permits replace
     "The timing-sensitive real-capture cancellation smoke runs in Chromium proxy and installed Chrome; lifecycle races also have deterministic unit coverage.",
   );
 
-  await page.goto("/");
+  await page.goto("./");
   const input = page.locator('input[type="file"]');
   await input.setInputFiles("data/dummy-encounter.txt");
   const cancel = page.getByRole("button", { name: "Cancel scanning" });

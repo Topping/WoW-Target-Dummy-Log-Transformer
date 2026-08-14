@@ -1,0 +1,257 @@
+# D11 static GitHub Pages release
+
+- **Prepared:** 2026-08-14
+- **Expected URL:**
+  `https://topping.github.io/WoW-Target-Dummy-Log-Transformer/`
+- **Repository path:** `/WoW-Target-Dummy-Log-Transformer/`
+- **Local implementation status:** release automation and repository-scoped
+  production validation are implemented.
+- **External deployment status at preparation:** not deployed. The public
+  repository metadata reported `has_pages: false`, the Pages API returned 404,
+  and the expected URL returned HTTP 404. A pushed workflow run and repository
+  owner action are still required.
+
+This is the release checklist and evidence record for D11. It does not replace
+the D10 measurements or broaden their browser-certification claims.
+
+## Final release decisions
+
+The release is one Vite entry document, one hashed stylesheet, one hashed
+application module, and one separately emitted hashed parser worker:
+
+```text
+index.html
+assets/index-<hash>.css
+assets/index-<hash>.js
+assets/parser.worker-<hash>.js
+```
+
+`vite.config.ts` keeps `base: "./"`. The entry document therefore references
+its CSS and application module relative to the repository-scoped document, and
+the built application resolves the worker relative to its emitted application
+module. No router or fallback document is needed: the only application route is
+the repository root. Direct loading and refreshing that URL reloads the waiting
+state; arbitrary child routes are not supported and may return GitHub Pages
+404, which is an accepted v0.2 limitation.
+
+`scripts/audit-pages-artifact.mjs` requires exactly the four files above. It
+rejects additional files, symlinks, source maps and source-map references,
+capture/log/environment files, representative real-capture identities, and
+common private-key/token signatures. `npm run audit:production` independently
+rejects non-HTML/CSS/JavaScript output and runtime network, persistence,
+service-worker, analytics, and URL-mutation paths.
+
+The local `scripts/serve-pages-artifact.mjs` server is development/test tooling
+only. It faithfully mounts `dist/` at the configured repository path and is
+excluded from the artifact by the four-file allowlist. The deployed product has
+no runtime server.
+
+## Workflow behavior and deployment prerequisites
+
+`.github/workflows/quality.yml` runs, in order:
+
+```sh
+npm ci
+npm run verify
+npm run build
+npm run audit:production
+npm run audit:pages
+```
+
+`.github/workflows/pages.yml` runs on a push to `main` or manual dispatch. Its
+validation job repeats those same gates, installs Playwright Chromium, Firefox,
+and WebKit, and runs the full browser suite against the locally mounted
+repository-scoped artifact. Only then does it upload `dist/` with the official
+Pages artifact action. The deployment job has only `pages: write` and
+`id-token: write` in addition to the workflow's read-only content permission.
+The final job runs the direct-load/reload test and the complete real-cleave
+file-to-both-exports/privacy workflow against the URL returned by the deployment
+action in all three Playwright proxy engines.
+
+The repository owner must complete or confirm these GitHub-side prerequisites:
+
+1. In **Settings → Pages → Build and deployment**, select **GitHub Actions** as
+   the source before the first run. The workflow's normal `GITHUB_TOKEN` cannot
+   enable Pages for a repository where it is disabled.
+2. Push the reviewed D11 changes to `main` or manually dispatch the workflow.
+3. Confirm Actions are enabled and the workflow `GITHUB_TOKEN` may create Pages
+   deployments. No repository secret is required.
+4. Review any protection rules on the `github-pages` environment and approve
+   the deployment if those rules require it.
+5. Record the successful workflow URL, deployed commit SHA, returned Pages URL,
+   and post-deployment smoke result in the sign-off section below.
+
+These settings cannot be changed or verified from an unauthenticated local
+checkout. Branch-protection settings also require authenticated repository
+access and were not inferred from their unavailable public API response.
+
+## Exact local validation and reproduction
+
+Use Node.js 22 or newer from a clean checkout:
+
+```sh
+npm ci
+npm run verify
+npm run build
+npm run audit:production
+npm run audit:pages
+npx playwright install chromium firefox webkit
+npm run test:browser:pages:proxies
+npm run test:browser:pages:chrome
+```
+
+The installed-Chrome command is separate so its evidence cannot be confused
+with the Chromium proxy. If installed Chrome is unavailable, record that as a
+gap rather than silently substituting Chromium.
+
+To inspect the exact artifact and reproduce its Pages path manually:
+
+```sh
+find dist -type f -print
+PAGES_BASE_PATH=/WoW-Target-Dummy-Log-Transformer/ npm run preview:pages
+```
+
+Then open:
+
+```text
+http://127.0.0.1:4173/WoW-Target-Dummy-Log-Transformer/
+```
+
+After a real deployment, rerun the release smoke without a local server:
+
+```sh
+PLAYWRIGHT_BASE_URL=https://topping.github.io/WoW-Target-Dummy-Log-Transformer/ \
+  npx playwright test \
+  tests/browser/pages-release.spec.ts \
+  tests/browser/workflow.spec.ts \
+  --project=chromium-proxy \
+  --project=firefox-proxy \
+  --project=webkit-proxy
+```
+
+## Local release-candidate evidence
+
+The final local run on 2026-08-14 produced:
+
+- `npm run verify`: 151 compact tests, 8 explicitly named capture-wide tests,
+  and 2 performance/retention tests passed after formatting, lint, negative
+  lint, and strict typechecking passed;
+- `npm run build`: four files—554-byte `index.html`, 230,408-byte application
+  JavaScript, 7,276-byte CSS, and a 45,455-byte separate parser worker;
+- `npm run audit:production`: passed for all four static artifacts;
+- `npm run audit:pages`: passed the exact file/path, relative asset, worker,
+  capture, map, and secret checks;
+- `npm run test:browser:pages:proxies`: 17 passed and 4 intentionally skipped;
+  Chromium proxy ran both large-capture smokes, while Firefox and WebKit each
+  skipped those timing-sensitive cases under the preserved D10 routing;
+- `npm run test:browser:pages:chrome`: 7/7 passed in the genuinely installed
+  headless Chrome binary.
+
+The observed proxy user agents were Chrome for Testing 151.0.7922.34, Firefox
+153.0, and WebKit reporting Safari 26.5. Installed Chrome reported
+`HeadlessChrome/151.0.0.0`. All four projects completed direct load, refresh,
+repository-relative application assets and worker, accessibility states, the
+real five-target workflow, downloaded-content assertions, and privacy checks.
+These are local production-artifact results, not deployed-URL evidence.
+
+## v0.2 release coverage matrix
+
+| Capability                                             | Release evidence                                                                 | Status before first deployment                |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------- | --------------------------------------------- |
+| Static browser app and local-only privacy              | Four-file artifact audit, production privacy audit, visible privacy card/footer  | Locally satisfied                             |
+| Streaming, responsive, cancellable progress            | D04 worker tests, D10 capture-wide/performance and heartbeat suites              | Satisfied by D10; preserved                   |
+| Current Retail parser, Unicode, unknown events         | Compact and explicitly named capture-wide parser suites                          | Satisfied by D02-D03; preserved               |
+| Character/target/attempt discovery and splitting       | Discovery unit and approved-ground-truth capture-wide suites                     | Satisfied by D05; preserved                   |
+| Extraction, ownership, external effects, filtering     | Extraction and ownership tests plus capture-wide profiles                        | Satisfied by D06; preserved                   |
+| JSON and filtered-log exports                          | Schema/round-trip tests and downloaded-content assertions in production browsers | Locally satisfied                             |
+| Non-technical complete workflow and errors             | React tests and Playwright real-cleave/recovery suites                           | Locally satisfied                             |
+| Parser tests independent of UI                         | `npm run verify` compact/capture-wide/performance routing                        | Satisfied; preserved                          |
+| Accessibility                                          | D10 axe/keyboard/focus/narrow-view evidence in installed Chrome and proxies      | Satisfied within documented automation limits |
+| Repository-scoped assets, worker, direct load, refresh | Artifact audit plus `pages-release.spec.ts` at the exact base path               | Locally satisfied                             |
+| Deployed static URL and post-deploy workflow           | Pages deployment output and `smoke-deployed` job                                 | Pending first deployment                      |
+| Synthetic encounter work                               | Explicitly outside D11                                                           | Not part of v0.2 release                      |
+
+## Browser and privacy evidence to record
+
+The D10 evidence remains: genuine installed headless Chrome 151 plus Playwright
+Chromium, Firefox, and WebKit engine proxies. Playwright Firefox is not the
+installed Firefox application, and Playwright WebKit is not installed Safari.
+Microsoft Edge was not exercised. The Pages workflow intentionally labels its
+projects `chromium-proxy`, `firefox-proxy`, and `webkit-proxy`; a green workflow
+must not be reported as actual Edge, Firefox, or Safari certification.
+
+For every local release-candidate and deployed smoke run, confirm:
+
+- the direct repository URL and refresh both load the waiting screen;
+- HTML, CSS, application JavaScript, and the parser worker load below the same
+  repository path;
+- the real five-target capture completes file → discovery → recorder → session
+  → processing → summary → JSON download → filtered-log download;
+- the JSON download has format `wow-training-dummy-session`, version 1, and the
+  filtered download contains the retained log-version record;
+- after file intake, requests are bodyless same-origin GETs and include only the
+  static parser-worker load—no combat GUID, name, or data appears in URLs;
+- the URL remains unchanged; localStorage, sessionStorage, IndexedDB, cookies,
+  and service-worker registrations remain empty; and no backend or analytics
+  request occurs.
+
+WebKit exposes the temporary `blob:` download through Playwright's request
+observer, while Chromium and Firefox do not. The regression permits that local
+protocol explicitly, applies same-origin repository-path rules to HTTP(S)
+requests only, and still requires every request to have no body. A `blob:` URL
+is in-memory browser transport, not a combat-data network request.
+
+Large `data/dummy-encounter.txt` coverage remains confined to the explicitly
+named capture-wide/performance and Chromium/installed-Chrome browser smoke
+suites. The deployed artifact contains none of `data/`, `tests/`, `docs/`,
+source code, repository metadata, source maps, environment files, or captures.
+
+## Accepted limitations
+
+- A refresh resets the in-memory workflow and requires reselecting the file.
+- There is no child application route or SPA fallback; only the repository root
+  is a valid direct-load URL.
+- Mobile-sized layout is smoke-tested, but large-log processing on phones is
+  not a primary v0.2 target.
+- Actual Edge, installed Firefox, installed Safari, manual screen readers,
+  high-contrast mode, and broader zoom/reflow remain unverified.
+- Current performance/budget evidence is tied to the D10 host, fixtures, and
+  versions and is not a universal performance promise.
+- GitHub Pages availability, repository settings, CDN behavior, and the
+  post-deployment URL cannot be truthfully verified until an authorized push
+  and successful first deployment occur.
+
+## Rollback
+
+The normal rollback is a new deployment from a reviewed revert; do not rewrite
+`main` history:
+
+```sh
+git log --oneline -- .github/workflows/pages.yml package.json vite.config.ts
+git revert <bad-release-commit>
+git push origin main
+```
+
+The revert push reruns every validation gate and deploys a new immutable
+artifact from the previous application state. If an earlier successful Pages
+workflow run and its artifact are still retained, rerunning that exact run is
+an alternative after verifying its commit SHA. For an urgent privacy or
+security incident, the repository owner may disable/unpublish Pages in
+**Settings → Pages** while preparing the validated revert; record that outage
+and re-enable only after the replacement workflow passes.
+
+## Release sign-off
+
+The checklist is not signed until the external fields are filled from a real
+successful run:
+
+```text
+Release commit SHA:      PENDING
+Quality workflow URL:    PENDING
+Pages workflow URL:      PENDING
+Deployed URL:            PENDING (currently HTTP 404)
+Post-deploy proxy smoke: PENDING
+Release owner/signature: PENDING
+Signed date/time (UTC):  PENDING
+Rollback commit SHA:     PENDING (fill only if rollback is used)
+```

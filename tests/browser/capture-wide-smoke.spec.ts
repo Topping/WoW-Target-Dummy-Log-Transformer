@@ -10,7 +10,7 @@ test("large real capture keeps the main thread responsive and extraction stops e
     "The explicitly named large-capture smoke runs in Chromium proxy and installed Chrome.",
   );
 
-  await page.goto("/");
+  await page.goto("./");
   await page.evaluate(() => {
     const samples: number[] = [];
     let previous = performance.now();

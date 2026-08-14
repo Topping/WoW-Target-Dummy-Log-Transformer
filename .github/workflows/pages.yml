@@ -1,0 +1,76 @@
+name: GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run verify
+      - run: npm run build
+      - run: npm run audit:production
+      - run: npm run audit:pages
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - name: Exercise repository-scoped production artifact
+        run: npm run test:browser:pages:proxies
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - name: Deploy immutable Pages artifact
+        id: deployment
+        uses: actions/deploy-pages@v5
+
+  smoke-deployed:
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - name: Exercise deployed file-to-export workflow
+        env:
+          PAGES_BASE_PATH: /WoW-Target-Dummy-Log-Transformer/
+          PLAYWRIGHT_BASE_URL: ${{ needs.deploy.outputs.page_url }}
+        run: >-
+          npx playwright test
+          tests/browser/pages-release.spec.ts
+          tests/browser/workflow.spec.ts
+          --project=chromium-proxy
+          --project=firefox-proxy
+          --project=webkit-proxy

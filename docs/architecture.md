@@ -200,3 +200,38 @@ Browser confidence is deliberately evidence-labelled: installed headless
 Chrome is genuine Chrome coverage; Playwright Chromium, Firefox, and WebKit are
 engine proxies, not Edge, installed Firefox, or installed Safari certification.
 No browser-specific compatibility fallback is justified by the current matrix.
+
+## ADR-007: Gated, four-file GitHub Pages release
+
+**Status:** Accepted for D11
+
+**Date:** 2026-08-14
+
+GitHub Pages receives only `dist/` after the same formatting, linting, strict
+typechecking, compact tests, explicitly named capture-wide/performance checks,
+production build, and privacy audit used by repository quality validation. A
+separate Pages artifact audit requires exactly `index.html`, one hashed CSS
+entry, one hashed JavaScript entry, and one separately emitted hashed parser
+worker. It rejects maps, source captures, environment/secret material,
+symlinks, and any unexpected file rather than relying on a broad extension
+allowlist.
+
+Relative Vite entry assets remain the accepted repository-scoped path strategy.
+The emitted application resolves the parser worker relative to its own module.
+A development-only static server mounts the exact `dist/` directory at
+`/WoW-Target-Dummy-Log-Transformer/`; it is used by Playwright to verify direct
+loading, refresh, asset and worker URLs, downloads, and privacy behavior without
+entering the deployment artifact.
+
+The Pages workflow validates the local repository-scoped artifact in Playwright
+Chromium, Firefox, and WebKit proxies before deployment, then repeats the direct
+load and complete real-cleave file-to-both-exports smoke against the URL returned
+by GitHub after deployment. Those are still proxy-engine results, not actual
+Edge, installed Firefox, or installed Safari certification. The workflow adds
+no router, backend, persistence, analytics, PWA, or service worker.
+
+At D11 implementation time GitHub's public metadata reported Pages disabled and
+the expected URL returned 404. Repository-owner enablement, the first pushed
+workflow, and deployed evidence are external prerequisites and must remain
+marked pending until actually observed. The complete release, sign-off, and
+rollback record is [`d11-release-checklist.md`](d11-release-checklist.md).

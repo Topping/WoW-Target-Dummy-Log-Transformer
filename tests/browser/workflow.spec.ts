@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+
 import { test, expect } from "@playwright/test";
 
 import {
@@ -18,7 +20,9 @@ test("real five-target file-to-both-exports workflow is accessible and local-onl
     readonly postData: string | null;
   }[] = [];
 
-  await page.goto("/");
+  await page.goto("./");
+  const analyzerUrl = page.url();
+  const analyzerBase = new URL(".", analyzerUrl);
   await expectNoAccessibilityViolations(page, "waiting for file");
 
   const chooserPromise = page.waitForEvent("filechooser");
@@ -66,6 +70,14 @@ test("real five-target file-to-both-exports workflow is accessible and local-onl
   await page.getByRole("button", { name: "Export session JSON" }).click();
   const jsonDownload = await jsonDownloadPromise;
   expect(jsonDownload.suggestedFilename()).toMatch(/\.session\.json$/u);
+  const jsonDownloadPath = await jsonDownload.path();
+  const downloadedJson = JSON.parse(
+    await readFile(jsonDownloadPath, "utf8"),
+  ) as { readonly format?: unknown; readonly version?: unknown };
+  expect(downloadedJson).toMatchObject({
+    format: "wow-training-dummy-session",
+    version: 1,
+  });
   await expect(page.locator(".export-feedback[role='status']")).toContainText(
     "is ready in your downloads",
   );
@@ -76,12 +88,42 @@ test("real five-target file-to-both-exports workflow is accessible and local-onl
     .click();
   const logDownload = await logDownloadPromise;
   expect(logDownload.suggestedFilename()).toMatch(/\.session\.filtered\.log$/u);
+  const logDownloadPath = await logDownload.path();
+  await expect
+    .poll(async () => readFile(logDownloadPath, "utf8"))
+    .toMatch(/COMBAT_LOG_VERSION,22/u);
 
+  expect(requestsAfterIntake.length).toBeGreaterThan(0);
   expect(requestsAfterIntake.every((request) => request.method === "GET")).toBe(
     true,
   );
   expect(
     requestsAfterIntake.every((request) => request.postData === null),
+  ).toBe(true);
+  const networkRequests = requestsAfterIntake.filter((request) =>
+    ["http:", "https:"].includes(new URL(request.url).protocol),
+  );
+  expect(
+    requestsAfterIntake.every((request) =>
+      ["http:", "https:", "blob:"].includes(new URL(request.url).protocol),
+    ),
+  ).toBe(true);
+  expect(networkRequests.length).toBeGreaterThan(0);
+  expect(
+    networkRequests.every((request) => {
+      const requestUrl = new URL(request.url);
+      return (
+        requestUrl.origin === analyzerBase.origin &&
+        requestUrl.pathname.startsWith(analyzerBase.pathname)
+      );
+    }),
+  ).toBe(true);
+  expect(
+    networkRequests.some((request) =>
+      /\/assets\/parser\.worker-[A-Za-z0-9_-]+\.js$/u.test(
+        new URL(request.url).pathname,
+      ),
+    ),
   ).toBe(true);
   const serializedRequests = JSON.stringify(requestsAfterIntake);
   expect(serializedRequests).not.toContain("Player-3702");
@@ -103,7 +145,7 @@ test("real five-target file-to-both-exports workflow is accessible and local-onl
         : 0,
   }));
   expect(privacyState).toEqual({
-    url: "http://127.0.0.1:4173/",
+    url: analyzerUrl,
     localStorageEntries: 0,
     sessionStorageEntries: 0,
     cookie: "",

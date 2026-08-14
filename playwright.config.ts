@@ -1,5 +1,18 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const externalBaseUrl = process.env["PLAYWRIGHT_BASE_URL"];
+const requestedBasePath = process.env["PAGES_BASE_PATH"] ?? "/";
+const basePath = `/${requestedBasePath.split("/").filter(Boolean).join("/")}${
+  requestedBasePath === "/" ? "" : "/"
+}`;
+const localBaseUrl = `http://127.0.0.1:4173${basePath}`;
+const baseUrl =
+  externalBaseUrl === undefined
+    ? localBaseUrl
+    : externalBaseUrl.endsWith("/")
+      ? externalBaseUrl
+      : `${externalBaseUrl}/`;
+
 export default defineConfig({
   testDir: "./tests/browser",
   fullyParallel: false,
@@ -10,15 +23,19 @@ export default defineConfig({
   timeout: 120_000,
   expect: { timeout: 30_000 },
   use: {
-    baseURL: "http://127.0.0.1:4173",
+    baseURL: baseUrl,
     trace: "retain-on-failure",
   },
-  webServer: {
-    command: "npm run preview -- --host 127.0.0.1 --port 4173",
-    url: "http://127.0.0.1:4173",
-    reuseExistingServer: false,
-    timeout: 30_000,
-  },
+  ...(externalBaseUrl === undefined
+    ? {
+        webServer: {
+          command: "npm run preview:pages",
+          url: localBaseUrl,
+          reuseExistingServer: false,
+          timeout: 30_000,
+        },
+      }
+    : {}),
   projects: [
     {
       name: "chromium-proxy",

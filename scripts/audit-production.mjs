@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const DIST = fileURLToPath(new URL("../dist/", import.meta.url));
-const allowedExtensions = new Set([".html", ".css", ".js", ".map"]);
+const allowedExtensions = new Set([".html", ".css", ".js"]);
 const forbiddenRuntimePatterns = [
   ["fetch call", /\bfetch\s*\(/u],
   ["XMLHttpRequest", /\bXMLHttpRequest\b/u],

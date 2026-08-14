@@ -518,6 +518,12 @@ assertions, accessibility automation, and manual checklist.
 
 ## D11 — GitHub Pages release
 
+**Implementation:** Release automation and local repository-scoped validation
+are complete on the current working tree. First deployment and its signed
+external evidence remain pending because GitHub Pages is currently disabled and
+the expected public URL returns 404. See
+[`d11-release-checklist.md`](d11-release-checklist.md).
+
 **Outcome:** v0.2 is available from a static URL with a repeatable release
 process.
 
@@ -590,7 +596,10 @@ an informed decision about a future synthetic export.
 These items should be resolved in the owning chunk and recorded as an ADR,
 fixture label, or test—not left as undocumented implementation assumptions:
 
-None for D00-D10. D11 still owns release/deployment evidence.
+None for D00-D10. D11's local decisions and validation are now recorded. Its
+remaining evidence is external: a pushed successful Pages workflow, the
+returned deployed URL, post-deployment proxy-engine smoke results, and
+repository-owner sign-off.
 
 The D05 defaults are now validated: the 10-second threshold produces the four
 approved split groups and preserves the 87.413-second cleave group, while the
@@ -718,6 +727,26 @@ boss capture for encounter envelopes. Synthetic fixtures cover minimal/isolated
 records, external buffs, and ownership variants that cannot be recorded
 conveniently. Every fixture declares whether it is real, derived, or synthetic;
 synthetic data does not masquerade as a real capture.
+
+### Static Pages release
+
+The D11 artifact is an exact four-file Vite build: `index.html`, one hashed CSS
+entry, one hashed application module, and one separately emitted hashed parser
+worker. Relative entry and worker resolution is validated at the repository
+path, and any additional artifact file—including maps, captures, environment
+files, or secret material—fails release validation. Both the Quality workflow
+and Pages workflow run `npm run verify`, the production build, the production
+privacy audit, and the Pages artifact audit. Deployment additionally gates on
+the repository-scoped Playwright proxy matrix and follows with a deployed-URL
+direct-load and complete real-cleave/export/privacy smoke.
+
+GitHub Pages repository enablement is not inferred from local code. At the D11
+implementation checkpoint public metadata reported `has_pages: false` and the
+expected URL returned HTTP 404. The owner must enable GitHub Actions as the
+Pages source before the first run, run the workflow, and complete the signed
+evidence record in [`d11-release-checklist.md`](d11-release-checklist.md).
+Playwright Firefox/WebKit remain proxies and do not change D10's actual-browser
+gaps.
 
 ## Suggested first implementation slice
 

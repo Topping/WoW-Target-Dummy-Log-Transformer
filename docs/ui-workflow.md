@@ -101,3 +101,12 @@ an alert, warnings use a status, and scrollable technical output is keyboard
 focusable. axe reports zero violations across waiting, confirmation, selection,
 result/details, and error states. Actual Edge, Firefox, Safari, and manual
 screen-reader coverage remain gaps; see [`d10-hardening.md`](d10-hardening.md).
+
+D11 runs the same production suite from the exact repository-scoped path and
+adds a direct-load/reload assertion for the waiting state. The complete real
+five-target workflow now inspects the downloaded JSON and filtered-log content,
+the separately loaded worker URL, unchanged page URL, empty browser storage,
+cookies and service-worker registrations, and same-origin bodyless requests.
+After deployment, that direct-load and full workflow pair runs against the URL
+returned by GitHub in Chromium, Firefox, and WebKit proxies. These labels do not
+claim actual Edge, installed Firefox, or installed Safari coverage.

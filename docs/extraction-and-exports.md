@@ -154,3 +154,13 @@ anchor, triggers the deterministic download, then removes the anchor and revokes
 the URL in `finally`. A hard serialization limit creates neither an object URL
 nor a download. Soft warnings are returned alongside the completed download for
 the UI to display.
+
+## D11 deployed-form export validation
+
+The repository-scoped production Playwright workflow downloads both formats
+from the emitted static application. It verifies the JSON format/version and
+the filtered log's retained `COMBAT_LOG_VERSION` record in addition to their
+deterministic filenames. Network observation begins before file intake and
+allows only the bodyless same-origin parser-worker request; the download uses
+the existing temporary `blob:` URL and does not become a combat-data request.
+The same workflow is run against the URL returned after a Pages deployment.
