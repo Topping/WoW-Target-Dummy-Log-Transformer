@@ -70,6 +70,12 @@ Unit tests should use these compact fixtures. The 28.9 MB noisy capture belongs
 only in the single capture-inventory smoke test and future explicit integration
 or end-to-end suites; it must not be imported into every parser unit test.
 
+D10 enforces that routing in package scripts: `npm test` excludes large capture
+suites, while `npm run test:capture-wide`, `npm run test:performance`, and the
+explicit browser capture smoke own real-capture reads. The performance fixture,
+measurement method, retained-state evidence, and browser results are documented
+in [`d10-hardening.md`](d10-hardening.md).
+
 ## Capture A–E coverage gaps
 
 The real environment could not produce an isolated training area, which is

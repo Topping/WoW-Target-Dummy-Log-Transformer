@@ -1,4 +1,5 @@
 export {
+  DEFAULT_SESSION_EXTRACTION_BUDGETS,
   DEFAULT_SESSION_EXTRACTION_OPTIONS,
   extractSessionChunks,
   extractSessionText,

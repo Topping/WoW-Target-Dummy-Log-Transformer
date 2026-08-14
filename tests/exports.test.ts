@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import sessionSchema from "../docs/session.schema.json";
 import {
+  DEFAULT_SESSION_EXPORT_SIZE_LIMITS,
   extractSessionText,
   parseCombatLogChunks,
   parseSessionJson,
@@ -47,6 +48,13 @@ async function session(): Promise<Session> {
 }
 
 describe("versioned session JSON", () => {
+  it("uses the measured D10 complete-export warning and failure defaults", () => {
+    expect(DEFAULT_SESSION_EXPORT_SIZE_LIMITS).toEqual({
+      softByteLimit: 128 * 1024 * 1024,
+      hardByteLimit: 256 * 1024 * 1024,
+    });
+  });
+
   it("validates against the committed schema and encodes every bigint tick as a decimal string", async () => {
     const value = await session();
     const exported = serializeSessionJson(value);

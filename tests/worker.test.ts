@@ -392,10 +392,11 @@ describe("PROCESS_SESSION lifecycle and cancellation races", () => {
       ),
     ).toBe(false);
 
+    const reuseFile = logFile();
     runtime.handle({
       type: "PROCESS_SESSION",
       operationId: "reuse-real",
-      file: logFile(),
+      file: reuseFile,
       selection: selection(),
       options: { preRollMs: 0, postRollMs: 0 },
     });
@@ -420,6 +421,26 @@ describe("PROCESS_SESSION lifecycle and cancellation races", () => {
       player: { guid: "Player-1", relationship: "primary" },
       targets: [{ guid: "Creature-1", relationship: "target" }],
     });
+    if (complete?.type !== "SESSION_COMPLETE") return;
+    const progress = responses
+      .filter(
+        (response) =>
+          response.type === "PROGRESS" &&
+          response.progress.operationId === "reuse-real",
+      )
+      .map((response) =>
+        response.type === "PROGRESS" ? response.progress : undefined,
+      )
+      .filter((value) => value !== undefined);
+    expect(
+      progress.every(
+        (item) =>
+          item.bytesProcessed >= 0 && item.bytesProcessed <= reuseFile.size,
+      ),
+    ).toBe(true);
+    expect(Math.max(...progress.map((item) => item.bytesProcessed))).toBe(
+      complete.session.statistics.filtering.bytesRead,
+    );
   });
 });
 

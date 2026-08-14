@@ -175,3 +175,28 @@ technical disclosure.
 anchor, and revokes the URL in `finally`. Export serialization and deterministic
 filename generation remain in the existing core/browser transport contracts.
 The complete UI behavior is documented in [`ui-workflow.md`](ui-workflow.md).
+
+## ADR-006: Measured safety budgets and production browser hardening
+
+**Status:** Accepted for D10
+
+**Date:** 2026-08-14
+
+D10 installs measured default retained-event, retained-source-byte, and export
+budgets. The values and their fixture/hardware multiples are recorded in
+[`d10-hardening.md`](d10-hardening.md); they limit selected retained data, not
+the size of a streamed source file. Explicit advanced options replace the
+corresponding default set. Soft limits warn and complete, while hard limits fail
+recoverably and return no truncated asset.
+
+Production worker construction uses Vite's statically analyzable literal
+`new Worker(new URL(..., import.meta.url), { type: "module" })` form. This is an
+enforced build contract: the privacy audit requires a separate worker asset, and
+the large-capture browser heartbeat verifies that parsing does not migrate to
+the main thread. Vite's unused modulepreload polyfill is disabled so the built
+runtime contains no fetch call.
+
+Browser confidence is deliberately evidence-labelled: installed headless
+Chrome is genuine Chrome coverage; Playwright Chromium, Firefox, and WebKit are
+engine proxies, not Edge, installed Firefox, or installed Safari certification.
+No browser-specific compatibility fallback is justified by the current matrix.

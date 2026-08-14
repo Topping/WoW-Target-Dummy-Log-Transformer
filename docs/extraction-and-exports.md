@@ -92,8 +92,12 @@ Soft event/byte crossings emit `SESSION_SOFT_EVENT_LIMIT_EXCEEDED` or
 `SESSION_SOFT_BYTE_LIMIT_EXCEEDED` once and continue to a complete Session. Hard
 crossings return recoverable `SESSION_HARD_EVENT_LIMIT_EXCEEDED` or
 `SESSION_HARD_BYTE_LIMIT_EXCEEDED` errors; no truncated Session is returned.
-There are deliberately no default soft or hard limits before D10 produces
-browser and hardware measurements.
+D10 measured the largest approved window at 5,210 retained events and
+1,395,641 retained source bytes. Defaults are now 25,000/50,000 retained events
+and 16/32 MiB retained source bytes for soft/hard behavior. They are configurable
+desktop safety boundaries, not source-file size limits. Passing an explicit
+`budgets` object replaces the default set. Full measurement conditions and
+justification are in [`d10-hardening.md`](d10-hardening.md).
 
 ## Session JSON v1
 
@@ -118,8 +122,11 @@ version and restores those strings to exact in-memory `bigint` values.
 Serialization is deterministic for the same Session and ends with one LF. Size
 limits are optional. A soft crossing emits `EXPORT_SOFT_BYTE_LIMIT_EXCEEDED`
 and returns the complete content; a hard crossing returns recoverable
-`EXPORT_HARD_BYTE_LIMIT_EXCEEDED` and no content. No default export limit is
-invented before D10 evidence.
+`EXPORT_HARD_BYTE_LIMIT_EXCEEDED` and no content. D10 measured the largest JSON
+export at 24,494,536 bytes. Complete exports now default to a 128 MiB soft
+warning and 256 MiB hard recoverable failure. Passing an explicit `sizeLimits`
+object replaces those defaults. Soft crossings return the complete export with
+a warning; hard crossings return no content.
 
 ## Filtered raw log and browser downloads
 

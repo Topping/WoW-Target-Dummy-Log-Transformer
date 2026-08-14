@@ -123,3 +123,19 @@ approved direct-player window is contained exactly at its start and through its
 approved end; the discovery group continues briefly while the recorder's
 explicitly summoned Risen Ghoul keeps attacking, as required by the owned-entity
 extension rule.
+
+## D10 retention and progress regressions
+
+The capture-wide profile reports the individual actor, target, candidate-window,
+owned-observation, and encounter counts alongside zero retained events/raw
+lines. On the 89,921-record noisy capture, pass one retained 727 actors, 90
+targets, 30 windows, and 628 ownership observations: 1,475 aggregate entries,
+not 89,921 event values. An instrumented schema test also requires discovery to
+make zero normalization calls.
+
+Worker progress tests tie every scanning value to cumulative streamed bytes,
+require monotonic values within each phase, require discovery to end at exact
+file size, and tie extraction's last read value to its filtering audit. The
+production build must emit a separate parser worker, while a large-capture
+25 ms browser heartbeat guards against main-thread parsing. Measurements and
+browser limitations are in [`d10-hardening.md`](d10-hardening.md).

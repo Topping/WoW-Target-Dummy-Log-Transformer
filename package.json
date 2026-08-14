@@ -6,8 +6,15 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "audit:production": "node scripts/audit-production.mjs",
     "preview": "vite preview",
-    "test": "vitest run",
+    "test": "vitest run --exclude 'tests/*-captures.test.ts' --exclude 'tests/*capture-wide.test.ts' --exclude 'tests/worker-capture.test.ts' --exclude 'tests/performance/**'",
+    "test:capture-wide": "vitest run tests/capture-inventory-capture-wide.test.ts tests/parser-captures.test.ts tests/discovery-captures.test.ts tests/extraction-captures.test.ts tests/worker-capture.test.ts",
+    "test:performance": "vitest run tests/performance/capture-profile.test.ts --maxWorkers=1",
+    "test:performance:profile": "D10_PROFILE=1 vitest run tests/performance/capture-profile.test.ts --maxWorkers=1 --reporter=verbose",
+    "test:browser": "npm run build && playwright test",
+    "test:browser:proxies": "npm run build && playwright test --project=chromium-proxy --project=firefox-proxy --project=webkit-proxy",
+    "test:browser:chrome": "npm run build && playwright test --project=installed-chrome",
     "test:watch": "vitest",
     "typecheck": "tsc -b",
     "lint": "eslint .",
@@ -15,7 +22,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "captures:stats": "node scripts/capture-stats.mjs",
-    "verify": "npm run format:check && npm run lint && npm run lint:negative && npm run typecheck && npm run test",
+    "verify": "npm run format:check && npm run lint && npm run lint:negative && npm run typecheck && npm run test && npm run test:capture-wide && npm run test:performance",
     "prepare": "husky"
   },
   "lint-staged": {
@@ -27,7 +34,9 @@
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.62.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.4",
     "@types/node": "^26.2.0",

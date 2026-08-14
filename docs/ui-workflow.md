@@ -87,7 +87,17 @@ retry, replacement, export feedback, and reset. jsdom component tests cover
 keyboard/drop intake, recorder and explicit character paths, grouping,
 multi-target rendering, progress, errors, cancellation, retries, full
 file-to-export flow, focus movement, semantic names, and URL revocation. The
-repository does not yet configure a real-browser runner; cross-browser and
-capture-wide UI smoke testing remains D10 rather than being simulated in unit
-tests. Ordinary UI tests use compact synthetic objects and never load
-`data/dummy-encounter.txt`.
+repository now configures a D10 production Playwright runner with
+installed-Chrome and Playwright Chromium/Firefox/WebKit projects plus axe-core.
+The real five-target capture completes the full workflow and both downloads in
+every project. The large noisy capture is confined to explicitly named
+Chromium/installed-Chrome smoke tests; ordinary UI tests continue to use compact
+synthetic objects and never load `data/dummy-encounter.txt`.
+
+Progress separates exact visual output from announcements: a named native
+progress element shows exact bytes/percentage, while a polite atomic status
+announces phase and ten-percent steps. State headings receive focus, errors use
+an alert, warnings use a status, and scrollable technical output is keyboard
+focusable. axe reports zero violations across waiting, confirmation, selection,
+result/details, and error states. Actual Edge, Firefox, Safari, and manual
+screen-reader coverage remain gaps; see [`d10-hardening.md`](d10-hardening.md).

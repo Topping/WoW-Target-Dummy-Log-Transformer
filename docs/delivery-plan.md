@@ -480,6 +480,9 @@ export tests.
 
 ## D10 — Performance, compatibility, and accessibility hardening
 
+**Implementation:** Complete on the current branch. Evidence and limitations
+are recorded in [`d10-hardening.md`](d10-hardening.md).
+
 **Outcome:** The complete workflow meets v0.2's quality claims on realistic data
 and supported desktop browsers.
 
@@ -587,8 +590,7 @@ an informed decision about a future synthetic export.
 These items should be resolved in the owning chunk and recorded as an ADR,
 fixture label, or test—not left as undocumented implementation assumptions:
 
-1. Measured default values for the approved soft/hard retained-data policy
-   (D10).
+None for D00-D10. D11 still owns release/deployment evidence.
 
 The D05 defaults are now validated: the 10-second threshold produces the four
 approved split groups and preserves the 87.413-second cleave group, while the
@@ -697,6 +699,14 @@ recoverable error and offers a narrower selection or an explicit Advanced retry
 with a higher limit. The parser never returns a silently truncated `Session`.
 Default values are set from the D10 browser/performance evidence and recorded
 with the fixture, browser, hardware, and measurement method.
+
+D10 measured 5,210 retained events, 1,395,641 retained source bytes, and a
+24,494,536-byte JSON export for the largest approved selected window. Defaults
+are therefore 25,000/50,000 retained events, 16/32 MiB retained source bytes,
+and 128/256 MiB complete export bytes for soft/hard behavior respectively.
+They are attempt-retention safety boundaries rather than source-file limits or
+universal product promises. Full evidence is in
+[`d10-hardening.md`](d10-hardening.md).
 
 ### Real and synthetic fixture coverage
 

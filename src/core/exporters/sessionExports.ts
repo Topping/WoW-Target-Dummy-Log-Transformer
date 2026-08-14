@@ -6,11 +6,17 @@ import type {
   Session,
   SessionExportKind,
   SessionExportOptions,
+  SessionExportSizeLimits,
 } from "../contracts";
 import { parserWarning } from "../parser/diagnostics";
 
 export const SESSION_JSON_FORMAT = "wow-training-dummy-session";
 export const SESSION_JSON_VERSION = 1;
+export const DEFAULT_SESSION_EXPORT_SIZE_LIMITS: Readonly<SessionExportSizeLimits> =
+  {
+    softByteLimit: 128 * 1024 * 1024,
+    hardByteLimit: 256 * 1024 * 1024,
+  };
 
 const TICK_KEYS = new Set([
   "localTimeTicks",
@@ -69,6 +75,14 @@ function validateLimits(
   return { ok: true, value: undefined, warnings: [] };
 }
 
+function resolveExportOptions(
+  options: SessionExportOptions,
+): SessionExportOptions {
+  return options.sizeLimits === undefined
+    ? { sizeLimits: DEFAULT_SESSION_EXPORT_SIZE_LIMITS }
+    : options;
+}
+
 function finishExport(
   content: string,
   mediaType: string,
@@ -116,6 +130,7 @@ export function serializeSessionJson(
   session: Session,
   options: SessionExportOptions = {},
 ): OperationResult<SerializedSessionExport> {
+  const resolvedOptions = resolveExportOptions(options);
   const document: SessionJsonDocument = {
     format: SESSION_JSON_FORMAT,
     version: SESSION_JSON_VERSION,
@@ -126,7 +141,7 @@ export function serializeSessionJson(
     content,
     "application/json;charset=utf-8",
     "json",
-    options,
+    resolvedOptions,
   );
 }
 
@@ -134,6 +149,7 @@ export function serializeFilteredSessionLog(
   session: Session,
   options: SessionExportOptions = {},
 ): OperationResult<SerializedSessionExport> {
+  const resolvedOptions = resolveExportOptions(options);
   const content = session.events
     .map((event) => event.raw + event.lineTerminator)
     .join("");
@@ -141,7 +157,7 @@ export function serializeFilteredSessionLog(
     content,
     "text/plain;charset=utf-8",
     "filtered-log",
-    options,
+    resolvedOptions,
   );
 }
 

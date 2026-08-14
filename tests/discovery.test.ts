@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  CombatLogSchemaRegistry,
   DEFAULT_SESSION_DISCOVERY_OPTIONS,
+  defaultSchemaRegistry,
   discoverCombatLogText,
+  type CombatLogSchema,
   type DiscoveryResult,
 } from "../src/core";
 
@@ -76,6 +79,32 @@ describe("bounded pass-one actor and recorder discovery", () => {
       targetInteractionCount: 1,
     });
     expect(result.proposedRecorderGuid).toBe("Player-1");
+  });
+
+  it("never constructs full normalized CombatEvent values during discovery", async () => {
+    const base = defaultSchemaRegistry.list()[0];
+    if (base === undefined) throw new Error("A default schema is required.");
+    let normalizationCalls = 0;
+    const instrumented: CombatLogSchema = {
+      ...base,
+      id: "discovery-normalization-spy",
+      normalize: (rawRecord, context) => {
+        normalizationCalls += 1;
+        return base.normalize(rawRecord, context);
+      },
+    };
+    const registry = new CombatLogSchemaRegistry([instrumented]);
+    const result = await discover([damage(1), damage(2)], {
+      registry,
+      manualSchemaId: instrumented.id,
+    });
+
+    expect(result.recordsScanned).toBe(3);
+    expect(normalizationCalls).toBe(0);
+    expect(result.retainedState).toMatchObject({
+      retainedCombatEventCount: 0,
+      retainedRawLineCount: 0,
+    });
   });
 
   it("requires explicit selection when zero or multiple player actors are mine", async () => {

@@ -200,15 +200,11 @@ export class ParserWorkerClient {
 }
 
 export function createParserWorkerClient(): ParserWorkerClient {
-  type BrowserWorkerConstructor = new (
-    url: URL,
-    options: { readonly type: "module" },
-  ) => WorkerTransport;
-  const WorkerConstructor = (
-    globalThis as unknown as { readonly Worker: BrowserWorkerConstructor }
-  ).Worker;
+  // Keep this exact statically analyzable shape: Vite recognizes it and emits
+  // parser.worker.ts as a separate production worker asset. Hiding the
+  // constructor behind an alias leaves an unresolved TypeScript URL in dist.
   return new ParserWorkerClient(
-    new WorkerConstructor(new URL("./parser.worker.ts", import.meta.url), {
+    new Worker(new URL("./parser.worker.ts", import.meta.url), {
       type: "module",
     }),
   );

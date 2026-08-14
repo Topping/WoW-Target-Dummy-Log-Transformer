@@ -43,6 +43,18 @@ export const DEFAULT_SESSION_EXTRACTION_OPTIONS = {
   includeDebugDecisions: false,
 } as const;
 
+/**
+ * D10 defaults measured against the approved real captures. They are safety
+ * boundaries for retained session data, not promises about source-file size.
+ */
+export const DEFAULT_SESSION_EXTRACTION_BUDGETS: Readonly<SessionExtractionBudgets> =
+  {
+    softRetainedEventLimit: 25_000,
+    hardRetainedEventLimit: 50_000,
+    softEstimatedByteLimit: 16 * 1024 * 1024,
+    hardEstimatedByteLimit: 32 * 1024 * 1024,
+  };
+
 export interface SessionExtractionRuntimeOptions extends SessionExtractionOptions {
   readonly registry?: CombatLogSchemaRegistry;
   readonly manualSchemaId?: string;
@@ -136,7 +148,7 @@ function resolveOptions(
       options.preRollMs ?? DEFAULT_SESSION_EXTRACTION_OPTIONS.preRollMs,
     postRollMs:
       options.postRollMs ?? DEFAULT_SESSION_EXTRACTION_OPTIONS.postRollMs,
-    budgets: options.budgets ?? {},
+    budgets: options.budgets ?? DEFAULT_SESSION_EXTRACTION_BUDGETS,
     includeDebugDecisions:
       options.includeDebugDecisions ??
       DEFAULT_SESSION_EXTRACTION_OPTIONS.includeDebugDecisions,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  DEFAULT_SESSION_EXTRACTION_BUDGETS,
   DEFAULT_SESSION_EXTRACTION_OPTIONS,
   extractSessionChunks,
   extractSessionText,
@@ -290,6 +291,15 @@ describe("pass-two extraction, ownership, and filtering", () => {
 });
 
 describe("retained-data budgets and cancellation", () => {
+  it("uses the measured D10 retained-event and retained-source-byte defaults", () => {
+    expect(DEFAULT_SESSION_EXTRACTION_BUDGETS).toEqual({
+      softRetainedEventLimit: 25_000,
+      hardRetainedEventLimit: 50_000,
+      softEstimatedByteLimit: 16 * 1024 * 1024,
+      hardEstimatedByteLimit: 32 * 1024 * 1024,
+    });
+  });
+
   it("warns at soft event and byte limits and returns the complete session", async () => {
     const baseline = await extract();
     const warned = await extract({

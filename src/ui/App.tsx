@@ -88,12 +88,18 @@ function ProgressView({
   const total = progress?.totalBytes ?? totalBytes;
   const percentage =
     total === 0 ? 0 : Math.min(100, Math.floor((processed / total) * 100));
+  const announcedPercentage =
+    percentage === 100 ? 100 : Math.floor(percentage / 10) * 10;
   return (
-    <div className="progress-panel" aria-live="polite">
+    <div className="progress-panel">
       <p className="phase-text">
         {progress === undefined ? "Starting…" : phaseLabel(progress.phase)}
       </p>
-      <progress max={total || 1} value={processed}>
+      <progress
+        aria-label="Combat log processing progress"
+        max={total || 1}
+        value={processed}
+      >
         {String(percentage)}%
       </progress>
       <p className="progress-copy">
@@ -102,6 +108,16 @@ function ProgressView({
       {progress?.status === undefined ? null : (
         <p className="muted">{progress.status}</p>
       )}
+      <p
+        className="sr-only"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {progress === undefined
+          ? "Processing is starting."
+          : `${phaseLabel(progress.phase)}, ${String(announcedPercentage)} percent.`}
+      </p>
     </div>
   );
 }
@@ -113,7 +129,11 @@ function WarningList({
 }) {
   if (warnings.length === 0) return null;
   return (
-    <section className="warning-panel" aria-labelledby="warnings-title">
+    <section
+      className="warning-panel"
+      aria-labelledby="warnings-title"
+      role="status"
+    >
       <h3 id="warnings-title">Warnings</h3>
       <ul>
         {warnings.map((warning, index) => (
@@ -122,7 +142,7 @@ function WarningList({
       </ul>
       <details>
         <summary>Show warning details</summary>
-        <pre>{stringifyTechnicalDetails(warnings)}</pre>
+        <pre tabIndex={0}>{stringifyTechnicalDetails(warnings)}</pre>
       </details>
     </section>
   );
@@ -321,7 +341,9 @@ function ErrorDetails({ error }: { readonly error: AppError }) {
       {error.technicalDetails === undefined ? null : (
         <details>
           <summary>Show technical details</summary>
-          <pre>{stringifyTechnicalDetails(error.technicalDetails)}</pre>
+          <pre tabIndex={0}>
+            {stringifyTechnicalDetails(error.technicalDetails)}
+          </pre>
         </details>
       )}
     </>
@@ -598,7 +620,7 @@ function Summary({
           This section includes actor identifiers and parser details intended
           for troubleshooting.
         </p>
-        <pre>{stringifyTechnicalDetails(technical)}</pre>
+        <pre tabIndex={0}>{stringifyTechnicalDetails(technical)}</pre>
       </details>
     </div>
   );
@@ -1001,6 +1023,7 @@ export function App({
         <section
           className="workflow-card error-panel"
           aria-labelledby="error-title"
+          role="alert"
         >
           <p className="eyebrow">We couldn't finish</p>
           <h2 id="error-title" ref={headingRef} tabIndex={-1}>
