@@ -139,8 +139,8 @@ a warning; hard crossings return no content.
 `serializeEncounterSessionLog` produces an independently parseable combat log
 for the selected visible attempt. It retains the source `COMBAT_LOG_VERSION`,
 inserts the known-good Razorgore envelope from `data/boss-encounter.txt`
-(encounter 610, difficulty 9, group size 40, instance 469), places the exact
-reference `COMBATANT_INFO` payload immediately after `ENCOUNTER_START`,
+(encounter 610, difficulty 9, group size 40, instance 469), places exactly one
+`COMBATANT_INFO` payload immediately after `ENCOUNTER_START`,
 transposes each selected dummy GUID and quoted name to the reference Razorgore
 GUID and name in the filtered in-window combat records, and closes the envelope
 with the selected duration.
@@ -150,7 +150,7 @@ The verified compatibility envelope is emitted in this order:
 1. retained `COMBAT_LOG_VERSION`;
 2. Blackwing Lair `ZONE_CHANGE` and `MAP_CHANGE`;
 3. Razorgore `ENCOUNTER_START`;
-4. the fixed reference `COMBATANT_INFO`;
+4. required, validated profile-backed character metadata;
 5. filtered combat records;
 6. Razorgore `ENCOUNTER_END` with wipe result `0`.
 
@@ -164,9 +164,22 @@ accepted by WowCoach. An A/B check also confirmed that deleting only
 `ZONE_CHANGE` and `MAP_CHANGE` from the accepted reference file produces
 WowCoach's unsupported-content result.
 
-The compatibility export still warns that it uses fixed character metadata.
-A future character-metadata input, such as a SimulationCraft profile, should
-replace the fixed `COMBATANT_INFO` payload.
+`EncounterLogExportOptions.combatantInfo` is mandatory for encounter export and
+accepts only a structurally validated, schema-bound V22 payload whose GUID
+equals `session.player.guid`. Missing or mismatched metadata fails before Blob
+creation. The serializer never gives this metadata access to the session event
+window, filtering, target transposition, ownership, timing, or encounter
+envelope.
+
+The pure `src/core/simc` parser accepts a bounded subset of the official addon
+output. `src/core/combatantInfo` reads the Blizzard talent header, selects the
+generated production tree by serialization version, spec, and WoW patch,
+constructs positional V22 tuples, and validates the nested structure. The
+checked-in tree artifact is refreshed with `npm run talents:update`; there is no
+runtime request or WoW installation dependency. Live ratings and pull-time
+auras are absent from `/simc` and are explicitly defaulted. Unsupported versions
+and structurally incompatible strings fail closed rather than substituting
+another character.
 
 `createSessionDownload` is the browser boundary that creates a Blob and assigns
 a filename. The boundary continues to support both serializers for internal

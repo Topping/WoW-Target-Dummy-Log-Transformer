@@ -5,3 +5,4 @@ data/*.txt
 package-lock.json
 spec.md
 docs/delivery-plan.md
+src/core/combatantInfo/data/generated.ts

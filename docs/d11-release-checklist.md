@@ -260,6 +260,26 @@ named capture-wide/performance and Chromium/installed-Chrome browser smoke
 suites. The deployed artifact contains none of `data/`, `tests/`, `docs/`,
 source code, repository metadata, source maps, environment files, or captures.
 
+## SimulationCraft character-metadata release gate
+
+The local parser, decoder, V22 builder/validator, export threading, and UI flow
+must not be described as production-compatible character metadata until all of
+the following evidence is recorded:
+
+- a sanitized `/simc` profile and genuine `COMBATANT_INFO` from the same
+  character/build/loadout/equipment snapshot;
+- generated live tree data whose serialization version, spec ID, ordered nodes,
+  and decoded triples match the genuine event;
+- confirmed V22 equipment ordering, item/gem sentinel behavior, scalar offsets,
+  and expansion tail;
+- accepted Warcraft Logs and WowCoach uploads with report IDs and test date;
+- a repeated privacy/browser audit showing no profile persistence or request.
+
+`INSTALLED_TALENT_SNAPSHOTS` is generated for all playable specializations, but
+that public data does not replace the paired-event and upload evidence above.
+There is no fixed-character fallback. Synthetic tests do not satisfy this
+release gate.
+
 ## Accepted limitations
 
 - A refresh resets the in-memory workflow and requires reselecting the file.

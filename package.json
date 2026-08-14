@@ -26,6 +26,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "captures:stats": "node scripts/capture-stats.mjs",
+    "talents:update": "node scripts/generate-talent-data.mjs",
+    "talents:check": "node scripts/generate-talent-data.mjs --check",
     "verify": "npm run format:check && npm run lint && npm run lint:negative && npm run typecheck && npm run test && npm run test:capture-wide && npm run test:performance",
     "prepare": "husky"
   },

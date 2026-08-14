@@ -10,6 +10,8 @@ import {
 
 import type {
   AppError,
+  BuildSimcCombatantInfoOptions,
+  BuiltCombatantInfo,
   DiscoveryResult,
   OperationResult,
   ParserWarning,
@@ -19,6 +21,7 @@ import type {
   SessionExportKind,
   SessionSelection,
 } from "../core";
+import { buildSimcCombatantInfo } from "../core";
 import {
   createParserWorkerClient,
   saveSessionDownload,
@@ -50,7 +53,18 @@ export interface AppProps {
   readonly downloadSession?: (
     session: Session,
     kind: SessionExportKind,
+    options?: { readonly combatantInfo?: BuiltCombatantInfo },
   ) => OperationResult<SavedSessionDownload>;
+  readonly buildCharacterProfile?: (
+    player: Pick<Session["player"], "guid" | "name">,
+    schemaId: string,
+    text: string,
+    options?: BuildSimcCombatantInfoOptions,
+  ) => OperationResult<BuiltCombatantInfo>;
+}
+
+interface CharacterProfileState {
+  readonly built: BuiltCombatantInfo;
 }
 
 function playerName(discovery: DiscoveryResult, guid: string): string {
@@ -311,11 +325,33 @@ function ErrorDetails({ error }: { readonly error: AppError }) {
 function Summary({
   state,
   onExport,
+  characterProfile,
+  profileDraft,
+  profileError,
+  profileFaction,
+  needsFaction,
+  onProfileDraftChange,
+  onProfileFactionChange,
+  onUseProfile,
+  onRemoveProfile,
 }: {
   readonly state: Extract<AnalyzerState, { status: "result" }>;
   readonly onExport: (kind: SessionExportKind) => void;
+  readonly characterProfile: CharacterProfileState | undefined;
+  readonly profileDraft: string;
+  readonly profileError: AppError | undefined;
+  readonly profileFaction: "alliance" | "horde" | undefined;
+  readonly needsFaction: boolean;
+  readonly onProfileDraftChange: (value: string) => void;
+  readonly onProfileFactionChange: (value: "alliance" | "horde") => void;
+  readonly onUseProfile: () => void;
+  readonly onRemoveProfile: () => void;
 }) {
   const { session } = state;
+  const profileErrorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    profileErrorRef.current?.focus();
+  }, [profileError]);
   const controlled = session.actors.filter(
     (actor) => actor.relationship === "owned-by-primary",
   );
@@ -335,9 +371,105 @@ function Summary({
   };
   return (
     <div className="result-summary">
+      <details className="character-profile-panel">
+        <summary>Character profile</summary>
+        <div className="character-profile-body">
+          <p>
+            In WoW, open the SimulationCraft addon with <code>/simc</code>, copy
+            all of its text, and paste it here. It supplies character metadata
+            only; every combat event still comes from this combat log.
+          </p>
+          {characterProfile === undefined ? null : (
+            <div className="profile-accepted" role="status">
+              <p>
+                Using {characterProfile.built.profile.characterName} ·{" "}
+                {characterProfile.built.profile.class.replaceAll("_", " ")} ·{" "}
+                {characterProfile.built.profile.spec.replaceAll("_", " ")} ·{" "}
+                {String(characterProfile.built.profile.equipment.length)}{" "}
+                equipped items
+              </p>
+              <button
+                type="button"
+                className="link-button"
+                onClick={onRemoveProfile}
+              >
+                Remove profile
+              </button>
+            </div>
+          )}
+          <form
+            className="character-profile-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              onUseProfile();
+            }}
+          >
+            <label htmlFor="simc-profile">SimulationCraft addon output</label>
+            <textarea
+              id="simc-profile"
+              rows={8}
+              value={profileDraft}
+              spellCheck={false}
+              autoComplete="off"
+              onChange={(event) => {
+                onProfileDraftChange(event.currentTarget.value);
+              }}
+            />
+            {needsFaction ? (
+              <fieldset className="profile-faction">
+                <legend>Character faction</legend>
+                {(["alliance", "horde"] as const).map((faction) => (
+                  <label key={faction}>
+                    <input
+                      type="radio"
+                      name="profile-faction"
+                      checked={profileFaction === faction}
+                      onChange={() => {
+                        onProfileFactionChange(faction);
+                      }}
+                    />{" "}
+                    {faction === "alliance" ? "Alliance" : "Horde"}
+                  </label>
+                ))}
+              </fieldset>
+            ) : null}
+            {profileError === undefined ? null : (
+              <div
+                ref={profileErrorRef}
+                className="profile-error error-copy"
+                role="alert"
+                tabIndex={-1}
+              >
+                <ErrorDetails error={profileError} />
+              </div>
+            )}
+            <div className="button-row">
+              <button
+                type="submit"
+                className="secondary-button"
+                disabled={profileDraft.trim().length === 0}
+              >
+                {characterProfile === undefined
+                  ? "Use profile"
+                  : "Replace profile"}
+              </button>
+            </div>
+          </form>
+          {characterProfile === undefined ? (
+            <p className="muted">
+              A validated profile matching the selected character is required
+              before download.
+            </p>
+          ) : null}
+        </div>
+      </details>
       <section className="result-hero" aria-labelledby="download-title">
         <div>
-          <p className="recommended-label">Ready to upload</p>
+          <p className="recommended-label">
+            {characterProfile === undefined
+              ? "Character profile required"
+              : "Ready to upload"}
+          </p>
           <h3 id="download-title">
             {session.player.name ?? "Unnamed character"}
           </h3>
@@ -351,13 +483,18 @@ function Summary({
         <div className="result-actions">
           <button
             type="button"
+            disabled={characterProfile === undefined}
             onClick={() => {
               onExport("encounter-log");
             }}
           >
             Download encounter log
           </button>
-          <p>Formatted for tools that analyze encounter logs.</p>
+          <p>
+            {characterProfile === undefined
+              ? "Add a validated SimulationCraft profile above to enable download."
+              : "Formatted for tools that analyze encounter logs."}
+          </p>
         </div>
         {state.exportFeedback === undefined ? null : (
           <div
@@ -468,14 +605,23 @@ function Summary({
 export function App({
   createWorkerClient = createParserWorkerClient,
   downloadSession = saveSessionDownload,
+  buildCharacterProfile = buildSimcCombatantInfo,
 }: AppProps) {
   const [state, dispatch] = useReducer(analyzerReducer, initialAnalyzerState);
   const [dragActive, setDragActive] = useState(false);
+  const [characterProfiles, setCharacterProfiles] = useState<
+    ReadonlyMap<string, CharacterProfileState>
+  >(new Map());
+  const [profileDraft, setProfileDraft] = useState("");
+  const [profileError, setProfileError] = useState<AppError>();
+  const [profileFaction, setProfileFaction] = useState<"alliance" | "horde">();
+  const [needsFaction, setNeedsFaction] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const clientRef = useRef<AnalyzerWorkerClient | undefined>(undefined);
   const operationNumber = useRef(0);
   const automaticallyProcessed = useRef(new Set<string>());
+  const profilePlayerGuid = useRef<string | undefined>(undefined);
 
   const getClient = useCallback((): AnalyzerWorkerClient => {
     clientRef.current ??= createWorkerClient();
@@ -493,6 +639,17 @@ export function App({
   useEffect(() => {
     headingRef.current?.focus();
   }, [state.status]);
+
+  useEffect(() => {
+    if (state.status !== "result") return;
+    if (profilePlayerGuid.current !== state.playerGuid) {
+      setProfileDraft("");
+      setProfileError(undefined);
+      setProfileFaction(undefined);
+      setNeedsFaction(false);
+    }
+    profilePlayerGuid.current = state.playerGuid;
+  }, [state]);
 
   const nextOperationId = useCallback((): string => {
     operationNumber.current += 1;
@@ -605,13 +762,25 @@ export function App({
     }
     automaticallyProcessed.current.clear();
     setDragActive(false);
+    setCharacterProfiles(new Map());
+    setProfileDraft("");
+    setProfileError(undefined);
+    setProfileFaction(undefined);
+    setNeedsFaction(false);
+    profilePlayerGuid.current = undefined;
     dispatch({ type: "RESET" });
   };
 
   const exportSession = (kind: SessionExportKind): void => {
     if (state.status !== "result") return;
     try {
-      const result = downloadSession(state.session, kind);
+      const characterProfile = characterProfiles.get(state.playerGuid);
+      if (kind === "encounter-log" && characterProfile === undefined) return;
+      const result = downloadSession(state.session, kind, {
+        ...(characterProfile === undefined
+          ? {}
+          : { combatantInfo: characterProfile.built }),
+      });
       if (result.ok) {
         dispatch({
           type: "EXPORT_SUCCEEDED",
@@ -641,6 +810,30 @@ export function App({
         },
       });
     }
+  };
+
+  const useCharacterProfile = (): void => {
+    if (state.status !== "result") return;
+    const result = buildCharacterProfile(
+      state.session.player,
+      state.session.parser.schema.id,
+      profileDraft,
+      profileFaction === undefined ? {} : { faction: profileFaction },
+    );
+    if (!result.ok) {
+      setNeedsFaction(result.error.code === "SIMC_FACTION_REQUIRED");
+      setProfileError(result.error);
+      return;
+    }
+    setCharacterProfiles((current) => {
+      const next = new Map(current);
+      next.set(state.playerGuid, { built: result.value });
+      return next;
+    });
+    setProfileDraft("");
+    setProfileError(undefined);
+    setProfileFaction(undefined);
+    setNeedsFaction(false);
   };
 
   const currentFile = "file" in state ? state.file : undefined;
@@ -798,7 +991,35 @@ export function App({
           <h2 id="result-title" ref={headingRef} tabIndex={-1}>
             Your encounter log is ready
           </h2>
-          <Summary state={state} onExport={exportSession} />
+          <Summary
+            state={state}
+            onExport={exportSession}
+            characterProfile={characterProfiles.get(state.playerGuid)}
+            profileDraft={profileDraft}
+            profileError={profileError}
+            profileFaction={profileFaction}
+            needsFaction={needsFaction}
+            onProfileDraftChange={(value) => {
+              setProfileDraft(value);
+              setProfileError(undefined);
+            }}
+            onProfileFactionChange={(value) => {
+              setProfileFaction(value);
+              setProfileError(undefined);
+            }}
+            onUseProfile={useCharacterProfile}
+            onRemoveProfile={() => {
+              setCharacterProfiles((current) => {
+                const next = new Map(current);
+                next.delete(state.playerGuid);
+                return next;
+              });
+              setProfileDraft("");
+              setProfileError(undefined);
+              setProfileFaction(undefined);
+              setNeedsFaction(false);
+            }}
+          />
           <div className="button-row workflow-navigation">
             <button
               type="button"

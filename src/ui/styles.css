@@ -46,7 +46,8 @@ body {
 }
 
 button,
-input {
+input,
+textarea {
   font: inherit;
 }
 
@@ -86,6 +87,11 @@ button:focus-visible,
 input:focus-visible,
 summary:focus-visible,
 a:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+textarea:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
 }
@@ -231,9 +237,71 @@ p {
 .summary-card,
 .export-panel,
 .warning-panel,
-.technical-panel {
+.technical-panel,
+.character-profile-panel {
   border: 1px solid var(--border);
   background: var(--surface);
+}
+
+.character-profile-panel {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 0.45rem;
+}
+
+.character-profile-panel > summary {
+  color: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.character-profile-body > p,
+.profile-accepted p {
+  margin: 0.45rem 0;
+  color: var(--muted);
+}
+
+.character-profile-body {
+  padding-top: 0.45rem;
+}
+
+.character-profile-form {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+.character-profile-form > label,
+.profile-faction legend {
+  font-weight: 700;
+}
+
+.character-profile-form textarea {
+  width: 100%;
+  min-height: 9rem;
+  resize: vertical;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.38rem;
+  padding: 0.7rem;
+  color: var(--text);
+  background: #111416;
+  font:
+    0.86rem/1.45 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+}
+
+.profile-faction {
+  display: flex;
+  gap: 1rem;
+  border: 0;
+  padding: 0.4rem 0 0;
+}
+
+.profile-error {
+  border-left: 3px solid var(--error);
+  padding-left: 0.8rem;
 }
 
 .privacy-card {

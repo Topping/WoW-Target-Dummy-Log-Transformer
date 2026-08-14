@@ -82,8 +82,24 @@ context behind a detail disclosure.
 
 ## Result and export behavior
 
-The result leads with the selected character, exact duration, target name or
-count, and the primary **Download encounter log** action.
+The result includes a **Character profile** form before the selected character,
+duration, target context, and primary **Download encounter log** action. The
+form accepts text only on explicit **Use profile** submission, never on each
+keystroke. It explains that `/simc` supplies character metadata only and that
+all combat activity remains combat-log-derived. Accepted text is reduced to a
+sanitized character/class/spec/equipment-count summary; raw profile text is not
+shown in technical details, persisted, or sent to the worker. A user can replace
+or remove the profile.
+
+Profile metadata is held only in application memory and keyed to the selected
+player GUID. It survives choosing another attempt for that player, is not reused
+for another player, and is cleared by **Start over**. An ambiguous race requires
+an Alliance/Horde choice. Invalid, mismatched, unsupported-build, and unknown
+talent-tree inputs produce focused recoverable errors while leaving the fixed
+compatibility download available.
+
+The result otherwise leads with the selected character, exact duration, target
+name or count, and the primary download action.
 Discovery/extraction warnings remain visible when present. Start time,
 relevant/removed counts, per-target statistics, and controlled entities are
 inside a closed **View attempt details** disclosure. Actor/target GUIDs,
@@ -102,9 +118,12 @@ A hard serializer failure creates no download and is displayed as a recoverable
 alert.
 
 The encounter-log button produces the verified WowCoach-compatible form:
-Blackwing Lair zone/map context, a Razorgore wipe envelope, fixed reference
-`COMBATANT_INFO`, and transposed selected-target identity, hostile flags, and
-advanced map IDs. The fixed character template produces a visible warning.
+Blackwing Lair zone/map context, a Razorgore wipe envelope, profile-backed
+`COMBATANT_INFO` after a matching profile has passed every gate, and transposed
+selected-target identity, hostile flags, and advanced map IDs. Download remains
+disabled without validated character metadata. The former fixed debugging
+character is not a fallback. Feedback calls out profile-defaulted live
+stats/auras.
 
 ## Verification boundary
 

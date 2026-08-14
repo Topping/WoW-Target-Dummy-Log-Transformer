@@ -2,11 +2,16 @@ import {
   serializeEncounterSessionLog,
   serializeSessionJson,
   sessionExportFilename,
+  type BuiltCombatantInfo,
   type OperationResult,
   type Session,
   type SessionExportKind,
   type SessionExportOptions,
 } from "../core";
+
+interface BrowserSessionExportOptions extends SessionExportOptions {
+  readonly combatantInfo?: BuiltCombatantInfo;
+}
 
 export interface BrowserSessionDownload {
   readonly blob: Blob;
@@ -20,12 +25,19 @@ export interface SavedSessionDownload {
 export function createSessionDownload(
   session: Session,
   kind: SessionExportKind,
-  options: SessionExportOptions = {},
+  options: BrowserSessionExportOptions = {},
 ): OperationResult<BrowserSessionDownload> {
   const serialized =
     kind === "json"
       ? serializeSessionJson(session, options)
-      : serializeEncounterSessionLog(session, options);
+      : options.combatantInfo === undefined
+        ? serializeEncounterSessionLog(session)
+        : serializeEncounterSessionLog(session, {
+            ...(options.sizeLimits === undefined
+              ? {}
+              : { sizeLimits: options.sizeLimits }),
+            combatantInfo: options.combatantInfo,
+          });
   if (!serialized.ok) return serialized;
   return {
     ok: true,
@@ -47,7 +59,7 @@ export function createSessionDownload(
 export function saveSessionDownload(
   session: Session,
   kind: SessionExportKind,
-  options: SessionExportOptions = {},
+  options: BrowserSessionExportOptions = {},
 ): OperationResult<SavedSessionDownload> {
   const download = createSessionDownload(session, kind, options);
   if (!download.ok) return download;

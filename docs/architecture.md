@@ -196,6 +196,37 @@ The public UI invokes this path only for `encounter-log`; JSON remains an
 internal core capability.
 The complete UI behavior is documented in [`ui-workflow.md`](ui-workflow.md).
 
+## ADR-007: Ephemeral SimulationCraft character metadata
+
+**Status:** Accepted with an external-validation gate
+
+**Date:** 2026-08-14
+
+The pasted `/simc` addon profile is export-only supplemental input. It is parsed
+on the main thread by a bounded pure core parser and is never inserted into
+`Session`, session JSON, the worker protocol, browser storage, URLs, analytics,
+or requests. Only a built `COMBATANT_INFO` object can cross into encounter
+serialization. That object is bound to the session player GUID and parser schema
+and cannot inspect or alter combat events, timing, targets, pets, ownership,
+filtering, or the synthetic encounter envelope.
+
+Blizzard talent exports encode node state by tree position. Runtime decoding
+therefore requires a checked-in complete tree snapshot. A development-time
+generator discovers Wago's production `wow` build, downloads Raidbots' resolved
+live talent data through its immutable content hash, validates all playable
+specializations, and emits a compact runtime artifact. The browser performs no
+talent-data request and needs no WoW installation. Blizzard's runtime-only tree
+checksum is retained from the pasted token as provenance; generated snapshots
+are selected by supported serialization version, spec ID, and WoW patch version
+and the decoder rejects structurally invalid/trailing data. Exact-hash snapshots
+remain supported when a trusted hash is available.
+
+The repository still lacks a sanitized `/simc` plus genuine same-character
+`COMBATANT_INFO` fixture and external upload acceptance evidence for the
+synthesized V22 record. That is a release-validation gap, not a reason to ship
+another character's data or an empty runtime registry. The former fixed
+debugging character was removed.
+
 ## ADR-006: Measured safety budgets and production browser hardening
 
 **Status:** Accepted for D10

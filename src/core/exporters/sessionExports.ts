@@ -1,5 +1,6 @@
 import type {
   AppError,
+  EncounterLogExportOptions,
   OperationResult,
   ParserWarning,
   SerializedSessionExport,
@@ -9,10 +10,9 @@ import type {
   SessionExportSizeLimits,
 } from "../contracts";
 import { parserWarning } from "../parser/diagnostics";
+import { validateV22CombatantInfo } from "../combatantInfo/validator";
 import {
   WOWCOACH_REFERENCE_BOSS_GUID,
-  WOWCOACH_REFERENCE_COMBATANT_GUID,
-  WOWCOACH_REFERENCE_COMBATANT_INFO,
   WOWCOACH_REFERENCE_ENCOUNTER,
 } from "./wowCoachReference";
 
@@ -236,9 +236,48 @@ const ENVELOPE_EVENT_TYPES = new Set([
 
 export function serializeEncounterSessionLog(
   session: Session,
-  options: SessionExportOptions = {},
+  options?: EncounterLogExportOptions,
 ): OperationResult<SerializedSessionExport> {
-  const resolvedOptions = resolveExportOptions(options);
+  const resolvedOptions = resolveExportOptions(options ?? {});
+  const combatantInfo = options?.combatantInfo;
+  if (combatantInfo === undefined) {
+    return {
+      ok: false,
+      error: {
+        category: "invalid-combat-log",
+        code: "SIMC_PROFILE_REQUIRED",
+        message:
+          "A validated SimulationCraft character profile is required before this encounter log can be downloaded.",
+        recoverable: true,
+        suggestedAction:
+          "Run /simc on the selected character, paste the complete addon output, and use the profile.",
+      },
+      warnings: [],
+    };
+  }
+  if (
+    combatantInfo.playerGuid !== session.player.guid ||
+    combatantInfo.schemaId !== session.parser.schema.id ||
+    !combatantInfo.eventPayload.startsWith(
+      `COMBATANT_INFO,${session.player.guid},`,
+    )
+  ) {
+    return {
+      ok: false,
+      error: {
+        category: "invalid-combat-log",
+        code: "SIMC_CHARACTER_MISMATCH",
+        message:
+          "The prepared character profile does not belong to this selected combat-log session.",
+        recoverable: true,
+        suggestedAction:
+          "Remove the profile, or paste /simc output from the selected character again.",
+      },
+      warnings: [],
+    };
+  }
+  const validation = validateV22CombatantInfo(combatantInfo.eventPayload);
+  if (!validation.ok) return validation;
   const version = session.events.find(
     (event) => event.type === "COMBAT_LOG_VERSION",
   );
@@ -265,7 +304,7 @@ export function serializeEncounterSessionLog(
       WOWCOACH_REFERENCE_ENCOUNTER.groupSize,
       WOWCOACH_REFERENCE_ENCOUNTER.instanceId,
     ]),
-    `${session.startTime.raw}  ${WOWCOACH_REFERENCE_COMBATANT_INFO}`,
+    `${session.startTime.raw}  ${combatantInfo.eventPayload}`,
     ...session.events
       .filter(
         (event) =>
@@ -298,16 +337,25 @@ export function serializeEncounterSessionLog(
     ...exported,
     warnings: [
       parserWarning(
-        "WOWCOACH_COMPATIBILITY_TEMPLATE_USED",
-        "This encounter-format export uses the verified Blackwing Lair/Razorgore compatibility template and fixed COMBATANT_INFO from data/boss-encounter.txt. Selected dummy identity, neutral NPC flags, and advanced map IDs are transposed, and the encounter ends as a wipe.",
-        {
-          details: {
-            selectedPlayerGuid: session.player.guid,
-            referencePlayerGuid: WOWCOACH_REFERENCE_COMBATANT_GUID,
-            referenceEncounterId: Number(WOWCOACH_REFERENCE_ENCOUNTER.id),
-          },
-        },
+        "WOWCOACH_SYNTHETIC_ENCOUNTER_ENVELOPE_USED",
+        "The encounter uses the verified synthetic Blackwing Lair/Razorgore envelope; combat events still come only from the selected combat-log session.",
       ),
+      parserWarning(
+        "SIMC_DEFAULTED_COMBATANT_STATS",
+        "Live character stats are not included in /simc output and use the V22 adapter defaults.",
+      ),
+      parserWarning(
+        "SIMC_DEFAULTED_COMBATANT_AURAS",
+        "Pull-time auras are not included in /simc output and are left empty.",
+      ),
+      ...(combatantInfo.provenance.equipment === "partial"
+        ? [
+            parserWarning(
+              "SIMC_DEFAULTED_GEM_ITEM_LEVELS",
+              "Gem item levels are not included in /simc output and use the V22 adapter default.",
+            ),
+          ]
+        : []),
       ...exported.warnings,
     ],
   };

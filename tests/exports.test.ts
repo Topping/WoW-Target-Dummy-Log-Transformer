@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-
 import Ajv from "ajv";
 import { describe, expect, it } from "vitest";
 
@@ -14,6 +12,8 @@ import {
   serializeEncounterSessionLog,
   serializeSessionJson,
   sessionExportFilename,
+  validateV22CombatantInfo,
+  type BuiltCombatantInfo,
   type Session,
   type SessionSelection,
 } from "../src/core";
@@ -33,13 +33,6 @@ const EXTERNAL =
   '8/14/2026 13:30:02.0000  SPELL_AURA_APPLIED,Player-2,"Nearby",0x518,0x0,Player-1,"Pølsefatter-ExampleRealm",0x511,0x0,3,"External",0x1,BUFF';
 const NATURAL_COMBATANT_INFO =
   "8/14/2026 13:29:59.0000  COMBATANT_INFO,Player-1,1,1944,513,30352,334,0,0,0,0,1186,1186,1186,98,52,276,276,276,0,1175,34,34,34,1956,251,[(76033,96161,2)],(0),[],[],10,0,0,0";
-const REFERENCE_COMBATANT_INFO = readFileSync(
-  new URL("../data/boss-encounter.txt", import.meta.url),
-  "utf8",
-)
-  .split(/\r?\n/u)
-  .find((line) => line.includes("  COMBATANT_INFO,"))
-  ?.split("  ")[1];
 const SOURCE = `${HEADER}\r\n${DAMAGE}\n${NOISE}\r\n${EXTERNAL}`;
 
 function selection(): SessionSelection {
@@ -61,6 +54,52 @@ async function session(): Promise<Session> {
   });
   if (!result.ok) throw new Error(result.error.message);
   return result.value;
+}
+
+function builtCombatantInfo(
+  playerGuid: string,
+  faction = "1",
+): BuiltCombatantInfo {
+  const emptyItem = "(0,0,(),(),())";
+  const scalars = Array.from({ length: 22 }, () => "0");
+  return {
+    eventPayload: `COMBATANT_INFO,${[
+      playerGuid,
+      faction,
+      ...scalars,
+      "251",
+      "[]",
+      "(0)",
+      `[${Array.from({ length: 18 }, () => emptyItem).join(",")}]`,
+      "[]",
+      "10",
+      "0",
+      "0",
+      "0",
+    ].join(",")}`,
+    playerGuid,
+    schemaId: "retail-12.1.0-project-1-log-22",
+    profile: {
+      provenance: {},
+      characterName: "Pølsefatter",
+      class: "death_knight",
+      level: 80,
+      race: "human",
+      region: "eu",
+      server: "example",
+      spec: "frost",
+      talentExport: "test",
+      equipment: [],
+    },
+    provenance: {
+      identity: "exact",
+      spec: "exact",
+      talents: "exact",
+      equipment: "exact",
+      stats: "defaulted",
+      auras: "defaulted",
+    },
+  };
 }
 
 describe("versioned session JSON", () => {
@@ -121,7 +160,8 @@ describe("versioned session JSON", () => {
 describe("WowCoach-compatible encounter log and browser download transport", () => {
   it("wraps selected records in the verified ordered compatibility envelope", async () => {
     const value = await session();
-    const exported = serializeEncounterSessionLog(value);
+    const combatantInfo = builtCombatantInfo(value.player.guid);
+    const exported = serializeEncounterSessionLog(value, { combatantInfo });
     if (!exported.ok) throw new Error(exported.error.message);
     const lines = exported.value.content.trimEnd().split("\n");
     expect(lines).toHaveLength(8);
@@ -135,15 +175,17 @@ describe("WowCoach-compatible encounter log and browser download transport", () 
     expect(lines[3]).toBe(
       '8/14/2026 13:30:01.0001  ENCOUNTER_START,610,"Razorgore the Untamed",9,40,469',
     );
-    expect(REFERENCE_COMBATANT_INFO).toBeDefined();
-    expect(lines[4]?.split("  ")[1]).toBe(REFERENCE_COMBATANT_INFO);
+    expect(validateV22CombatantInfo(combatantInfo.eventPayload).ok).toBe(true);
+    expect(lines[4]?.split("  ")[1]).toBe(combatantInfo.eventPayload);
     expect(lines.slice(5, 7)).toEqual([TRANSPOSED_DAMAGE, EXTERNAL]);
     expect(lines[7]).toBe(
       '8/14/2026 13:30:02.0000  ENCOUNTER_END,610,"Razorgore the Untamed",9,40,0,1000',
     );
     expect(exported.value.content).not.toContain(NOISE);
-    expect(exported.warnings).toMatchObject([
-      { code: "WOWCOACH_COMPATIBILITY_TEMPLATE_USED" },
+    expect(exported.warnings.map((warning) => warning.code)).toEqual([
+      "WOWCOACH_SYNTHETIC_ENCOUNTER_ENVELOPE_USED",
+      "SIMC_DEFAULTED_COMBATANT_STATS",
+      "SIMC_DEFAULTED_COMBATANT_AURAS",
     ]);
     const reparsed = await parseCombatLogChunks([
       new TextEncoder().encode(exported.value.content),
@@ -173,11 +215,14 @@ describe("WowCoach-compatible encounter log and browser download transport", () 
     if (advancedDamage === undefined) {
       throw new Error("missing advanced damage fixture");
     }
-    const exported = serializeEncounterSessionLog({
+    const advancedSession = {
       ...value,
       events: value.events.map((event) =>
         event.raw === DAMAGE ? advancedDamage : event,
       ),
+    };
+    const exported = serializeEncounterSessionLog(advancedSession, {
+      combatantInfo: builtCombatantInfo(value.player.guid),
     });
     if (!exported.ok) throw new Error(exported.error.message);
     const damageLine = exported.value.content
@@ -199,8 +244,16 @@ describe("WowCoach-compatible encounter log and browser download transport", () 
     );
   });
 
-  it("uses the verified compatibility character template consistently", async () => {
+  it("requires supplied character metadata and never substitutes a captured reference character", async () => {
     const value = await session();
+    expect(serializeEncounterSessionLog(value)).toMatchObject({
+      ok: false,
+      error: { code: "SIMC_PROFILE_REQUIRED", recoverable: true },
+    });
+    expect(createSessionDownload(value, "encounter-log")).toMatchObject({
+      ok: false,
+      error: { code: "SIMC_PROFILE_REQUIRED", recoverable: true },
+    });
     const parsed = await parseCombatLogText(
       `${HEADER}\n${NATURAL_COMBATANT_INFO}`,
     );
@@ -209,20 +262,57 @@ describe("WowCoach-compatible encounter log and browser download transport", () 
       (event) => event.type === "COMBATANT_INFO",
     );
     if (combatant === undefined) throw new Error("missing combatant fixture");
-    const exported = serializeEncounterSessionLog({
-      ...value,
-      events: [...value.events, combatant],
-    });
+    const supplied = builtCombatantInfo(value.player.guid);
+    const exported = serializeEncounterSessionLog(
+      {
+        ...value,
+        events: [...value.events, combatant],
+      },
+      { combatantInfo: supplied },
+    );
     if (!exported.ok) throw new Error(exported.error.message);
-    expect(exported.warnings).toMatchObject([
-      { code: "WOWCOACH_COMPATIBILITY_TEMPLATE_USED" },
-    ]);
     expect(exported.value.content).not.toContain(
       "COMBATANT_INFO,Player-1,1,1944",
     );
-    expect(exported.value.content).toContain(
-      "COMBATANT_INFO,Player-3702-0A70D8DF,1,1944",
+    expect(exported.value.content).toContain(supplied.eventPayload);
+    expect(exported.value.content).not.toContain("Player-3702-0A70D8DF");
+  });
+
+  it("changing validated profile metadata changes only the one synthetic COMBATANT_INFO line", async () => {
+    const value = await session();
+    const first = serializeEncounterSessionLog(value, {
+      combatantInfo: builtCombatantInfo(value.player.guid),
+    });
+    const second = serializeEncounterSessionLog(value, {
+      combatantInfo: builtCombatantInfo(value.player.guid, "0"),
+    });
+    if (!first.ok || !second.ok) throw new Error("export failed");
+    const firstLines = first.value.content.trimEnd().split("\n");
+    const secondLines = second.value.content.trimEnd().split("\n");
+    expect(secondLines[4]).toContain("COMBATANT_INFO,Player-1,0,");
+    expect(
+      secondLines.filter((line) => line.includes("  COMBATANT_INFO,")),
+    ).toHaveLength(1);
+    expect(secondLines.filter((_, index) => index !== 4)).toEqual(
+      firstLines.filter((_, index) => index !== 4),
     );
+    expect(second.warnings.map((warning) => warning.code)).toEqual([
+      "WOWCOACH_SYNTHETIC_ENCOUNTER_ENVELOPE_USED",
+      "SIMC_DEFAULTED_COMBATANT_STATS",
+      "SIMC_DEFAULTED_COMBATANT_AURAS",
+    ]);
+  });
+
+  it("rejects profile metadata bound to a different player before export", async () => {
+    const value = await session();
+    expect(
+      serializeEncounterSessionLog(value, {
+        combatantInfo: builtCombatantInfo("Player-Other"),
+      }),
+    ).toMatchObject({
+      ok: false,
+      error: { code: "SIMC_CHARACTER_MISMATCH", recoverable: true },
+    });
   });
 
   it("generates deterministic safe filenames and confines Blob creation to browser transport", async () => {
@@ -257,6 +347,7 @@ describe("WowCoach-compatible encounter log and browser download transport", () 
     }
     expect(
       serializeEncounterSessionLog(value, {
+        combatantInfo: builtCombatantInfo(value.player.guid),
         sizeLimits: { hardByteLimit: 1 },
       }),
     ).toMatchObject({

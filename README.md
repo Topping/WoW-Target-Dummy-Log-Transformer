@@ -29,8 +29,17 @@ the landing drop area instead of immediately reopening the system file picker.
 
 The encounter-log export uses the manually verified WowCoach-compatible
 Blackwing Lair/Razorgore envelope, transposes the selected dummy combat stream,
-and reports the attempt as a wipe. Until character metadata import is added, it
-visibly discloses that the fixed reference `COMBATANT_INFO` template is used.
+and reports the attempt as a wipe. The result screen accepts `/simc` addon text
+as character metadata only; combat events, timing, targets, pets, ownership, and
+filtering continue to come exclusively from the selected combat-log session.
+Profile parsing, identity/schema binding, talent decoding, V22 construction,
+and structural validation are implemented. Checked-in production talent data is
+generated for all playable specializations from Raidbots' resolved live client
+data; `npm run talents:update` discovers the current non-PTR retail build and
+refreshes it without a local WoW installation. Encounter-log download requires
+validated character metadata; the former fixed debugging character has been
+removed. Paired genuine-event and external-upload evidence remains a release
+validation item for the synthesized V22 metadata.
 D10 adds measured retained-data/export safety limits, production worker and
 privacy audits, explicit capture-wide performance regressions, installed-Chrome
 and Playwright engine-proxy workflows, axe accessibility automation, and a
@@ -46,6 +55,7 @@ Requires Node.js 22 or newer.
 
 ```sh
 npm install
+npm run talents:update
 npm run dev
 npm run verify
 npm run build
@@ -64,6 +74,11 @@ unsafe-`any` fixture), strict TypeScript, compact tests, explicitly named
 capture-wide tests, and the D10 retention/performance regression. Normal package installation
 installs the committed Husky pre-commit hook; it runs staged formatting/linting
 and a full typecheck. CI runs the same verification command and production build.
+
+Talent data is checked in for browser-only runtime use. Maintainers refresh it
+with `npm run talents:update`; `npm run talents:check` verifies that the artifact
+matches the latest resolved live dataset. See
+[`src/core/combatantInfo/data/README.md`](src/core/combatantInfo/data/README.md).
 
 Capture inventory details and the non-mutating statistics command are documented
 in [`docs/test-data.md`](docs/test-data.md). Architecture decisions are in

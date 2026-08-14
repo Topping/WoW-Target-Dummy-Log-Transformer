@@ -9,7 +9,9 @@ import {
   parseTimestamp,
   serializeEncounterSessionLog,
   serializeSessionJson,
+  type BuiltCombatantInfo,
   type NonEmptyReadonlyArray,
+  type Session,
   type SessionSelection,
 } from "../../src/core";
 
@@ -41,6 +43,48 @@ interface ProfileMeasurement {
 }
 
 const PLAYER_GUID = "Player-3702-0A70D8DF";
+
+function syntheticCombatantInfo(session: Session): BuiltCombatantInfo {
+  const emptyItem = "(0,0,(),(),())";
+  return {
+    eventPayload: `COMBATANT_INFO,${[
+      session.player.guid,
+      "1",
+      ...Array.from({ length: 22 }, () => "0"),
+      "251",
+      "[]",
+      "(0)",
+      `[${Array.from({ length: 18 }, () => emptyItem).join(",")}]`,
+      "[]",
+      "10",
+      "0",
+      "0",
+      "0",
+    ].join(",")}`,
+    playerGuid: session.player.guid,
+    schemaId: session.parser.schema.id,
+    profile: {
+      provenance: {},
+      characterName: session.player.name ?? "PerformanceFixture",
+      class: "death_knight",
+      level: 80,
+      race: "human",
+      region: "eu",
+      server: "fixture",
+      spec: "frost",
+      talentExport: "test-only",
+      equipment: [],
+    },
+    provenance: {
+      identity: "exact",
+      spec: "exact",
+      talents: "exact",
+      equipment: "exact",
+      stats: "defaulted",
+      auras: "defaulted",
+    },
+  };
+}
 
 function capture(id: string) {
   const value = manifest.captures.find((candidate) => candidate.id === id);
@@ -193,7 +237,9 @@ describe("D10 capture-wide performance and retention profile", () => {
         if (!measured.value.ok) continue;
         const session = measured.value.value;
         const json = serializeSessionJson(session);
-        const encounter = serializeEncounterSessionLog(session);
+        const encounter = serializeEncounterSessionLog(session, {
+          combatantInfo: syntheticCombatantInfo(session),
+        });
         expect(json.ok).toBe(true);
         expect(encounter.ok).toBe(true);
         if (!json.ok || !encounter.ok) continue;

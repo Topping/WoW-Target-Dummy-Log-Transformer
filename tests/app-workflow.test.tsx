@@ -12,6 +12,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type {
   AppError,
+  BuiltCombatantInfo,
   DiscoveryResult,
   OperationResult,
   ParserWarning,
@@ -80,6 +81,43 @@ function success<T>(
 
 function failure(error: AppError): OperationResult<never> {
   return { ok: false, error, warnings: [] };
+}
+
+function characterInfoFixture(): BuiltCombatantInfo {
+  return {
+    eventPayload: "COMBATANT_INFO,Player-Recorder,test",
+    playerGuid: "Player-Recorder",
+    schemaId: "test-schema",
+    profile: {
+      provenance: {},
+      characterName: "Pølsefatter",
+      class: "death_knight",
+      level: 80,
+      race: "human",
+      region: "eu",
+      server: "argent_dawn",
+      spec: "frost",
+      talentExport: "token",
+      equipment: [
+        {
+          slot: "head",
+          itemId: 1,
+          itemLevel: 700,
+          gemIds: [],
+          bonusIds: [],
+          options: { id: "1" },
+        },
+      ],
+    },
+    provenance: {
+      identity: "exact",
+      spec: "exact",
+      talents: "exact",
+      equipment: "exact",
+      stats: "defaulted",
+      auras: "defaulted",
+    },
+  };
 }
 
 function progress(
@@ -185,7 +223,7 @@ describe("browser-oriented D08-D09 workflow", () => {
     expect(screen.getByRole("heading", { name: "How to use it" })).toBeTruthy();
   });
 
-  it("runs the common file → automatic attempt → encounter export path", async () => {
+  it("runs the common file → automatic attempt path and requires a character profile before export", async () => {
     const user = userEvent.setup();
     const client = new FakeAnalyzerClient();
     const download = vi.fn(
@@ -240,16 +278,61 @@ describe("browser-oriented D08-D09 workflow", () => {
       downloadButton.compareDocumentPosition(details as Node) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
-    await user.click(downloadButton);
-    expect(download).toHaveBeenCalledOnce();
-    expect(download).toHaveBeenCalledWith(expect.anything(), "encounter-log");
-    expect(
-      await screen.findByText(/character\.session\.encounter\.txt is ready/u),
-    ).toBeTruthy();
+    expect((downloadButton as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText(/validated SimulationCraft profile/u)).toBeTruthy();
+    expect(download).not.toHaveBeenCalled();
 
     await user.click(screen.getByText("View attempt details"));
     expect(screen.getByText("Risen Ghoul")).toBeTruthy();
     expect(screen.getByText("Technical details")).toBeTruthy();
+  });
+
+  it("accepts matching character metadata explicitly and threads only the built COMBATANT_INFO into download", async () => {
+    const user = userEvent.setup();
+    const client = new FakeAnalyzerClient();
+    const built = characterInfoFixture();
+    const buildProfile = vi.fn(() => success(built));
+    const download = vi.fn(() =>
+      success({ filename: "profiled.session.encounter.txt" }),
+    );
+    render(
+      <App
+        createWorkerClient={() => client}
+        buildCharacterProfile={buildProfile}
+        downloadSession={download}
+      />,
+    );
+    await reachResult(user, client);
+
+    await user.click(screen.getByText("Character profile"));
+    const profile = screen.getByLabelText("SimulationCraft addon output");
+    await user.type(profile, "complete simc output");
+    await user.click(screen.getByRole("button", { name: "Use profile" }));
+    expect(buildProfile).toHaveBeenCalledWith(
+      expect.objectContaining({ guid: "Player-Recorder" }),
+      "test-schema",
+      "complete simc output",
+      {},
+    );
+    expect(screen.getByText(/Using Pølsefatter/u)).toBeTruthy();
+    expect((profile as HTMLTextAreaElement).value).toBe("");
+
+    await user.click(
+      screen.getByRole("button", { name: "Download encounter log" }),
+    );
+    expect(download).toHaveBeenCalledWith(expect.anything(), "encounter-log", {
+      combatantInfo: built,
+    });
+    expect(
+      await screen.findByText(
+        /metadata came from the pasted SimulationCraft profile/u,
+      ),
+    ).toBeTruthy();
+
+    await user.type(profile, "discard this replacement");
+    await user.click(screen.getByRole("button", { name: "Remove profile" }));
+    expect(screen.queryByText(/Using Pølsefatter/u)).toBeNull();
+    expect((profile as HTMLTextAreaElement).value).toBe("");
   });
 
   it("requires explicit choice when no unique recorder exists and shows every character", async () => {
@@ -471,7 +554,11 @@ describe("browser-oriented D08-D09 workflow", () => {
       failure(hardError),
     );
     render(
-      <App createWorkerClient={() => client} downloadSession={download} />,
+      <App
+        createWorkerClient={() => client}
+        buildCharacterProfile={() => success(characterInfoFixture())}
+        downloadSession={download}
+      />,
     );
     await reachProcessing(user, client);
     client.processes[0]?.resolve(
@@ -491,6 +578,12 @@ describe("browser-oriented D08-D09 workflow", () => {
     await user.click(screen.getByRole("button", { name: "Retry processing" }));
     client.processes[1]?.resolve(success(makeSession()));
     await screen.findByRole("heading", { name: "Your encounter log is ready" });
+    await user.click(screen.getByText("Character profile"));
+    await user.type(
+      screen.getByLabelText("SimulationCraft addon output"),
+      "complete simc output",
+    );
+    await user.click(screen.getByRole("button", { name: "Use profile" }));
     await user.click(
       screen.getByRole("button", { name: "Download encounter log" }),
     );

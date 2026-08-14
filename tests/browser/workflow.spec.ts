@@ -1,5 +1,3 @@
-import { readFile } from "node:fs/promises";
-
 import { test, expect } from "@playwright/test";
 
 import {
@@ -46,6 +44,10 @@ test("real five-target encounter-log workflow is accessible and local-only", asy
   await expect(page.locator(".result-meta")).toContainText("5 targets");
   await expect(
     page.getByRole("button", { name: "Download encounter log" }),
+  ).toBeDisabled();
+  await expect(page.getByText("Character profile required")).toBeVisible();
+  await expect(
+    page.getByText(/validated SimulationCraft profile/u),
   ).toBeVisible();
   await expect(
     page.getByText("Export session JSON", { exact: true }),
@@ -56,36 +58,7 @@ test("real five-target encounter-log workflow is accessible and local-only", asy
   await expect(page.getByText(/parserVersion/u)).toBeVisible();
   await expectNoAccessibilityViolations(page, "processed result");
 
-  const logDownloadPromise = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Download encounter log" }).click();
-  const logDownload = await logDownloadPromise;
-  expect(logDownload.suggestedFilename()).toMatch(
-    /\.session\.encounter\.txt$/u,
-  );
-  const logDownloadPath = await logDownload.path();
-  const downloadedLog = await readFile(logDownloadPath, "utf8");
-  await expect
-    .poll(() => downloadedLog)
-    .toMatch(/ENCOUNTER_START,610,"Razorgore the Untamed",9,40,469/u);
-  expect(downloadedLog).toContain('ZONE_CHANGE,469,"Blackwing Lair",9');
-  expect(downloadedLog).toContain(
-    'MAP_CHANGE,287,"Blackwing Lair",-7394.120117,-7727.069824,-844.622009,-1344.050049',
-  );
-  expect(downloadedLog).toContain("Creature-0-1465-469-4188-12435-00007EE8CE");
-  expect(downloadedLog).not.toContain("Cleave Training Dummy");
-  expect(downloadedLog).not.toContain("-243208-");
-  expect(downloadedLog).toContain(
-    'Creature-0-1465-469-4188-12435-00007EE8CE,"Razorgore the Untamed",0x10a48,',
-  );
-  expect(downloadedLog).not.toContain('"Razorgore the Untamed",0x10a28,');
-  expect(downloadedLog).toContain(",287,");
-  expect(downloadedLog).not.toContain(",2393,");
-  expect(downloadedLog).toMatch(
-    /ENCOUNTER_END,610,"Razorgore the Untamed",9,40,0,/u,
-  );
-  await expect(page.locator(".export-feedback[role='status']")).toContainText(
-    "verified Blackwing Lair/Razorgore compatibility template",
-  );
+  await expect(page.locator(".export-feedback")).toHaveCount(0);
   await expect(page.getByText(/WowCoach/u)).toHaveCount(0);
 
   expect(requestsAfterIntake.length).toBeGreaterThan(0);
