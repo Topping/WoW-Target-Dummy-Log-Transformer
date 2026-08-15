@@ -14,6 +14,9 @@ describe("application shell", () => {
     expect(html).not.toContain("<header");
     expect(html).toContain("How to use it");
     expect(html).toContain("Upload your target dummy combat log.");
+    expect(html).toContain("Upload to Warcraft Logs as Unlisted");
+    expect(html).toContain("analysis-only synthetic encounter");
+    expect(html).toContain("without entering public rankings");
     expect(html).toContain("Archon desktop client");
     expect(html).toContain("chosen analysis tool");
   });

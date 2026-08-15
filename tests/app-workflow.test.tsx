@@ -193,11 +193,29 @@ describe("browser-oriented D08-D09 workflow", () => {
       /Drop WoWCombatLog\.txt here/u,
     ).parentElement;
     if (dropZone === null) throw new Error("drop zone not found");
+    const unlistedNotice = screen.getByRole("heading", {
+      name: "Upload to Warcraft Logs as Unlisted",
+    }).parentElement?.parentElement;
+    if (unlistedNotice === null || unlistedNotice === undefined) {
+      throw new Error("unlisted upload notice not found");
+    }
+    expect(
+      dropZone.compareDocumentPosition(unlistedNotice) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
+    expect(unlistedNotice.textContent).toContain(
+      "without entering public rankings",
+    );
     fireEvent.drop(dropZone, {
       dataTransfer: { files: [file("not-a-log.bin")] },
     });
     expect(await screen.findAllByText(/not-a-log\.bin/u)).toHaveLength(1);
     expect(screen.queryByRole("heading", { name: "How to use it" })).toBeNull();
+    expect(
+      screen.queryByRole("heading", {
+        name: "Upload to Warcraft Logs as Unlisted",
+      }),
+    ).toBeNull();
     expect(client.discoveries).toHaveLength(1);
 
     unmount();

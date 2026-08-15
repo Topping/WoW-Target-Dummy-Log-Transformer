@@ -29,6 +29,14 @@ test("repository-scoped production entry point loads directly and after refresh"
   await expect(
     page.getByText("Processed locally. Nothing is uploaded."),
   ).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: "Upload to Warcraft Logs as Unlisted",
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/without entering public rankings/u),
+  ).toBeVisible();
   await expect(page.getByText(/Archon desktop client/u)).toBeVisible();
   await expect(page.getByText("Browser only", { exact: true })).toHaveCount(0);
 

@@ -20,8 +20,8 @@ fight.
 
 WoW Dummy Log Converter finds your meaningful training attempt inside the
 combat log and turns it into an encounter-style `.txt` file. Upload that file to
-Warcraft Logs, then use the resulting report with the encounter analysis tool
-of your choice.
+Warcraft Logs as **Unlisted**, then use the resulting report with the encounter
+analysis tool of your choice.
 
 ## What it does
 
@@ -32,11 +32,20 @@ of your choice.
   entities.
 - Handles both single-target and cleave-dummy sessions.
 - Adds character, specialization, talent, and equipment details from `/simc`.
-- Produces an encounter log ready for the standard Warcraft Logs upload flow.
+- Produces an encounter log for the unlisted Warcraft Logs upload flow.
 
 The converter does not simulate your rotation or invent damage events. It gives
 the combat you actually recorded the encounter structure expected by downstream
 tools.
+
+## Upload as Unlisted
+
+The generated file is an analysis-only synthetic encounter. When uploading it
+to Warcraft Logs, choose **Unlisted** visibility in the Archon desktop client.
+An unlisted report is available through its direct link for use with analysis
+tools, but it does not enter public rankings.
+
+Do not publish the generated report or use it for rankings.
 
 ## How to use it
 
@@ -45,8 +54,8 @@ tools.
 3. Open the converter and choose your `WoWCombatLog.txt` file.
 4. Paste the complete text output from `/simc` into **Character profile**.
 5. Download the generated encounter-log `.txt` file.
-6. Upload it to Warcraft Logs with the Archon desktop client, then open the
-   report in your preferred analysis tool.
+6. Upload it to Warcraft Logs as **Unlisted** with the Archon desktop client,
+   then open the report in your preferred analysis tool.
 
 ## Development
 

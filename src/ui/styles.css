@@ -373,6 +373,41 @@ p {
   min-width: 0;
 }
 
+.unlisted-notice {
+  display: flex;
+  gap: 0.8rem;
+  margin-top: 0.85rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #655535;
+  border-left: 4px solid var(--warning);
+  border-radius: 0.45rem;
+  background: #211d15;
+}
+
+.unlisted-notice-mark {
+  display: grid;
+  flex: 0 0 auto;
+  width: 1.7rem;
+  height: 1.7rem;
+  place-items: center;
+  border-radius: 50%;
+  color: #17140e;
+  background: var(--warning);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.unlisted-notice h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.unlisted-notice p {
+  margin: 0.2rem 0 0;
+  color: #d8ccb1;
+  font-size: 0.9rem;
+}
+
 .user-guide {
   margin-top: 2.25rem;
 }

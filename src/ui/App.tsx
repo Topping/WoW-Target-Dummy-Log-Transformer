@@ -1196,27 +1196,49 @@ export function App({
         <div className="workflow-region">{workflow}</div>
 
         {state.status === "waiting" ? (
-          <section className="user-guide" aria-labelledby="guide-title">
-            <h2 id="guide-title">How to use it</h2>
-            <ol>
-              <li>Install the SimulationCraft addon before recording.</li>
-              <li>Upload your target dummy combat log.</li>
-              <li>
-                Paste the complete text output from <code>/simc</code> into{" "}
-                <strong>Character profile</strong>.
-              </li>
-              <li>
-                Download the transformed <code>.txt</code> file.
-              </li>
-              <li>
-                Upload that file to Warcraft Logs with the Archon desktop
-                client.
-              </li>
-              <li>
-                Copy the Warcraft Logs link into your chosen analysis tool.
-              </li>
-            </ol>
-          </section>
+          <>
+            <aside
+              className="unlisted-notice"
+              aria-labelledby="unlisted-notice-title"
+            >
+              <div className="unlisted-notice-mark" aria-hidden="true">
+                !
+              </div>
+              <div>
+                <h2 id="unlisted-notice-title">
+                  Upload to Warcraft Logs as Unlisted
+                </h2>
+                <p>
+                  The generated file is an analysis-only synthetic encounter.
+                  Keep the report unlisted so it is available by direct link
+                  without entering public rankings. Do not publish it or use it
+                  for rankings.
+                </p>
+              </div>
+            </aside>
+
+            <section className="user-guide" aria-labelledby="guide-title">
+              <h2 id="guide-title">How to use it</h2>
+              <ol>
+                <li>Install the SimulationCraft addon before recording.</li>
+                <li>Upload your target dummy combat log.</li>
+                <li>
+                  Paste the complete text output from <code>/simc</code> into{" "}
+                  <strong>Character profile</strong>.
+                </li>
+                <li>
+                  Download the transformed <code>.txt</code> file.
+                </li>
+                <li>
+                  Upload that file to Warcraft Logs as <strong>Unlisted</strong>{" "}
+                  with the Archon desktop client.
+                </li>
+                <li>
+                  Copy the Warcraft Logs link into your chosen analysis tool.
+                </li>
+              </ol>
+            </section>
+          </>
         ) : null}
       </main>
     </div>
