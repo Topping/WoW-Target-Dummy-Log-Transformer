@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "audit:production": "node scripts/audit-production.mjs",
     "audit:pages": "node scripts/audit-pages-artifact.mjs",
+    "demo:record": "npm run build && node scripts/record-product-demo.mjs",
     "preview": "vite preview",
     "preview:pages": "node scripts/serve-pages-artifact.mjs",
     "test": "vitest run --exclude 'tests/*-captures.test.ts' --exclude 'tests/*capture-wide.test.ts' --exclude 'tests/worker-capture.test.ts' --exclude 'tests/performance/**'",

@@ -344,10 +344,12 @@ function Summary({
   readonly needsFaction: boolean;
   readonly onProfileDraftChange: (value: string) => void;
   readonly onProfileFactionChange: (value: "alliance" | "horde") => void;
-  readonly onUseProfile: () => void;
+  readonly onUseProfile: () => boolean;
   readonly onRemoveProfile: () => void;
 }) {
   const { session } = state;
+  const profilePanelRef = useRef<HTMLDetailsElement>(null);
+  const profileSummaryRef = useRef<HTMLElement>(null);
   const profileErrorRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     profileErrorRef.current?.focus();
@@ -371,12 +373,18 @@ function Summary({
   };
   return (
     <div className="result-summary">
-      <details className="character-profile-panel">
-        <summary>
+      <details ref={profilePanelRef} className="character-profile-panel">
+        <summary ref={profileSummaryRef}>
           <span>Character profile</span>
-          <span className="character-profile-summary-guide">
-            Required: paste your SimulationCraft addon output
-          </span>
+          {characterProfile === undefined ? (
+            <span className="character-profile-summary-guide">
+              Required: paste your SimulationCraft addon output
+            </span>
+          ) : (
+            <span className="character-profile-active-badge">
+              Active profile · {characterProfile.built.profile.characterName}
+            </span>
+          )}
         </summary>
         <div className="character-profile-body">
           <p>
@@ -407,7 +415,12 @@ function Summary({
             className="character-profile-form"
             onSubmit={(event) => {
               event.preventDefault();
-              onUseProfile();
+              if (onUseProfile()) {
+                if (profilePanelRef.current !== null) {
+                  profilePanelRef.current.open = false;
+                }
+                profileSummaryRef.current?.focus();
+              }
             }}
           >
             <label htmlFor="simc-profile">SimulationCraft addon output</label>
@@ -512,9 +525,6 @@ function Summary({
             role={state.exportFeedback.outcome === "error" ? "alert" : "status"}
           >
             <p>{state.exportFeedback.message}</p>
-            {state.exportFeedback.warnings.map((warning) => (
-              <p key={warning.code}>{warning.message}</p>
-            ))}
             {state.exportFeedback.error?.suggestedAction ===
             undefined ? null : (
               <p>{state.exportFeedback.error.suggestedAction}</p>
@@ -818,8 +828,8 @@ export function App({
     }
   };
 
-  const useCharacterProfile = (): void => {
-    if (state.status !== "result") return;
+  const useCharacterProfile = (): boolean => {
+    if (state.status !== "result") return false;
     const result = buildCharacterProfile(
       state.session.player,
       state.session.parser.schema.id,
@@ -829,7 +839,7 @@ export function App({
     if (!result.ok) {
       setNeedsFaction(result.error.code === "SIMC_FACTION_REQUIRED");
       setProfileError(result.error);
-      return;
+      return false;
     }
     setCharacterProfiles((current) => {
       const next = new Map(current);
@@ -840,6 +850,7 @@ export function App({
     setProfileError(undefined);
     setProfileFaction(undefined);
     setNeedsFaction(false);
+    return true;
   };
 
   const currentFile = "file" in state ? state.file : undefined;
@@ -1191,8 +1202,7 @@ export function App({
               <li>Install the SimulationCraft addon before recording.</li>
               <li>Upload your target dummy combat log.</li>
               <li>
-                On the result page, run <code>/simc</code> on the recorded
-                character and paste all of the addon's output into{" "}
+                Paste the complete text output from <code>/simc</code> into{" "}
                 <strong>Character profile</strong>.
               </li>
               <li>

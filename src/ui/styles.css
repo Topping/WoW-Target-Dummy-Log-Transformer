@@ -275,6 +275,17 @@ p {
   font-weight: 500;
 }
 
+.character-profile-active-badge {
+  border: 1px solid #496a4d;
+  border-radius: 999px;
+  padding: 0.16rem 0.48rem;
+  color: #cfe6c8;
+  background: #18251a;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
 .character-profile-body > p,
 .profile-accepted p {
   margin: 0.45rem 0;

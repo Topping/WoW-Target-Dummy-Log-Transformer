@@ -333,7 +333,7 @@ export function analyzerReducer(
           exportFeedback: {
             kind: action.kind,
             outcome: "success",
-            message: `${action.filename} is ready in your downloads. Character metadata came from the pasted SimulationCraft profile.`,
+            message: "Encounter log downloaded.",
             warnings: action.warnings,
           },
         };

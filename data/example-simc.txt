@@ -1,0 +1,140 @@
+# Pølsefatter - Frost - 2026-08-14 18:44 - EU/Argent Dawn
+# SimC Addon 12.1.0-02
+# WoW 12.1.0.69299, TOC 120100
+# Requires SimulationCraft 1000-01 or newer
+
+deathknight="Pølsefatter"
+level=90
+race=dark_iron_dwarf
+region=eu
+server=argent_dawn
+role=attack
+professions=engineering=39/enchanting=25
+spec=frost
+# loot_spec=frost
+
+talents=CsPAkXBWxkyfx9CbGaHonEAhLNAzMMjZAz2MzMzMLzMjMjxYYmxgZmZmZmZmZAAAAAAAAAYMbDMgFwywEyYBzMmZGYAYYmBYmBD
+
+# Saved Loadout: mplus
+# talents=CsPAkXBWxkyfx9CbGaHonEAhLNAzMMjZAz2MzMzMLzMDmxYMMzYwMzMzMzMzMAAAAAAAAAMmtBGwCYZYAGLYmxMzADADzMAzMYA
+
+omnium_talents=136814:1/136815:1/136817:1/136819:1/136822:1
+
+# Relentless Rider's Crown (289)
+head=,id=249970,enchant_id=7991,gem_id=240908,bonus_id=6652/13440/13338/13575/12806/13534
+# Masterwork Sin'dorei Amulet (285)
+neck=,id=240950,gem_id=240983,bonus_id=12214/13667/12497/12066/8791/13622,content_tuning=3615,crafted_stats=40/36,crafting_quality=5
+# Shoulderplates of Frozen Blood (289)
+shoulder=,id=50234,enchant_id=7973,bonus_id=13440/6652/13577/12699/12806
+# Fluxweave Cloak (276)
+back=,id=251206,bonus_id=13440/6652/13577/12699/12798,content_tuning=1279
+# Relentless Rider's Cuirass (289)
+chest=,id=249973,enchant_id=7987,bonus_id=6652/13440/13336/13575/12806
+# Blinky's Collar (1)
+shirt=,id=268274,content_tuning=3606
+# Spellbreaker's Bracers (285)
+wrist=,id=237834,gem_id=240908,bonus_id=12214/13667/12497/12066/8960/12384/8791/13622/12666,content_tuning=3615,crafted_stats=36/40,crafting_quality=5
+# Relentless Rider's Bonegrasps (289)
+hands=,id=249971,bonus_id=6652/13440/13337/13574/12806
+# Relentless Rider's Chain (289)
+waist=,id=249967,gem_id=240908,bonus_id=12806/6652/13440/3174/13534
+# Relentless Rider's Legguards (289)
+legs=,id=249969,enchant_id=8159,bonus_id=6652/13440/13339/13575/12806
+# Greaves of the Unformed (276)
+feet=,id=249381,enchant_id=8019,bonus_id=6652/13577/13334/12798
+# Masterwork Sin'dorei Band (285)
+finger1=,id=240949,enchant_id=7969,gem_id=240908,bonus_id=12214/13667/12497/12066/8791/13622,content_tuning=3615,crafted_stats=32/49,crafting_quality=5
+# Spiritseal Ring (276)
+finger2=,id=249622,enchant_id=7969,gem_id=240908,bonus_id=6652/13668/12798,content_tuning=4898
+# Gaze of the Alnseer (285)
+trinket1=,id=249343,bonus_id=41/13334/13653
+# Light Company Guidon (285)
+trinket2=,id=249344,bonus_id=6652/13334/13653
+# Blood Knight's Warblade (295)
+main_hand=,id=237846,enchant_id=3368,bonus_id=12214/13655/12497/12066/12685/8960/8791/13622,content_tuning=3615,crafted_stats=36/32,crafting_quality=5
+
+### Gear from Bags
+#
+# Bramblestalker's Feathered Cowl (253)
+# head=,id=250459,bonus_id=6652/13534/13577/13333/12787,content_tuning=4907
+#
+# Draenic Drive Chain (259)
+# neck=,id=282426,bonus_id=13668/12793/8902,content_tuning=7331
+#
+# Draenic Drive Chain (256)
+# neck=,id=282426,bonus_id=13668/12788/8902,content_tuning=7331
+#
+# Steelbark Chestguard (233)
+# chest=,id=256981,bonus_id=12777/42/13577,content_tuning=4240
+#
+# Preyseeker's Polished Brigandine (246)
+# chest=,id=259941,bonus_id=12785/6652/13577,content_tuning=5236
+#
+# Common Gray Shirt (1)
+# shirt=,id=3428,content_tuning=864
+#
+# Mechagonian Tabard (1)
+# tabard=,id=174068,content_tuning=863
+#
+# Bindings of Transcendence (40)
+# wrist=,id=16926,bonus_id=9031,content_tuning=1005
+#
+# Dragonstalker's Bracers (40)
+# wrist=,id=16935,bonus_id=9031,content_tuning=1005
+#
+# Light's March Bracers (259)
+# wrist=,id=249326,bonus_id=6652/12667/13577/13334/12793
+#
+# Netherwind Bindings (40)
+# wrist=,id=16918,bonus_id=9031,content_tuning=1005
+#
+# Tarnished Dawnlit Commander's Gauntlets (253)
+# hands=,id=258938,bonus_id=13900/13663,drop_level=90,content_tuning=3321
+#
+# Preyseeker's Polished Handguards (220)
+# hands=,id=259943,bonus_id=12769/6652/13578,content_tuning=5224
+#
+# Steelbark Greaves (282)
+# legs=,id=257002,bonus_id=12826/6652/13662,content_tuning=3321
+#
+# Deepspore Leather Galoshes (220)
+# feet=,id=264553,bonus_id=12769/6652/13578/11311,content_tuning=4280
+#
+# Snapper Steppers (272)
+# feet=,id=264585,bonus_id=43/13663/11311/12819,content_tuning=3321
+#
+# Novice Combatant's Medallion (201)
+# trinket1=,id=267076,bonus_id=13644/13451,content_tuning=3313
+#
+# Phasebolt Thrower (269)
+# main_hand=,id=275223,bonus_id=6652/13334/12796,content_tuning=7331
+#
+# Spellbreaker's Blade (272)
+# main_hand=,id=237839,enchant_id=3368,bonus_id=12214/13667/12497/12066/12693/8960/8791/13621,content_tuning=3615,crafted_stats=40/49,crafting_quality=5
+#
+# Nexus-Captain's Phaseblade (259)
+# main_hand=,id=275217,bonus_id=43/13334/12793,content_tuning=7331
+#
+# Root Sculptor's Verdaxe (276)
+# main_hand=,id=249661,enchant_id=3370,bonus_id=6652/12798
+#
+# Void-Touched Sunfury Blade (295)
+# main_hand=,id=263921,bonus_id=6652/12830,content_tuning=3321
+
+### Weekly Reward Choices
+#
+### End of Weekly Reward Choices
+
+### Additional Character Info
+#
+# catalyst_currencies=3269:8/3378:8/2813:8/3116:8
+#
+# upgrade_currencies=c:1792:913/c:3442:72/c:3443:60/c:1813:439/i:228338:2/i:228339:1/i:268552:3/i:232875:3
+#
+# slot_high_watermarks=0:289:289/1:285:285/2:289:289/3:289:289/4:289:289/5:289:289/6:276:276/7:285:285/8:289:289/9:276:276/10:285:298/11:276:276/12:295:295/13:0:84/14:295:298/15:276:295/16:0:108
+#
+# upgrade_achievements=19577/19578/19579/40107/40115/41886/42767/42768/42769/42770/61809
+#
+# bonus_roll_currencies=3418:0/3511:0
+
+# Checksum: 69912160

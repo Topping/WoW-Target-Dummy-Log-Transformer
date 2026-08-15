@@ -300,7 +300,13 @@ describe("browser-oriented D08-D09 workflow", () => {
     const built = characterInfoFixture();
     const buildProfile = vi.fn(() => success(built));
     const download = vi.fn(() =>
-      success({ filename: "profiled.session.encounter.txt" }),
+      success({ filename: "profiled.session.encounter.txt" }, [
+        {
+          code: "SIMC_DEFAULTED_COMBATANT_STATS",
+          severity: "info",
+          message: "Internal V22 adapter details.",
+        },
+      ]),
     );
     render(
       <App
@@ -311,7 +317,10 @@ describe("browser-oriented D08-D09 workflow", () => {
     );
     await reachResult(user, client);
 
-    await user.click(screen.getByText("Character profile"));
+    const profileSummary = screen.getByText("Character profile");
+    const profilePanel = profileSummary.closest("details");
+    await user.click(profileSummary);
+    expect(profilePanel).toHaveProperty("open", true);
     expect(
       screen.getByText(/Install the SimulationCraft addon before recording/u),
     ).toBeTruthy();
@@ -329,6 +338,9 @@ describe("browser-oriented D08-D09 workflow", () => {
     );
     expect(screen.getByText(/Using Pølsefatter/u)).toBeTruthy();
     expect((profile as HTMLTextAreaElement).value).toBe("");
+    expect(profilePanel).toHaveProperty("open", false);
+    expect(screen.getByText("Active profile · Pølsefatter")).toBeTruthy();
+    expect(document.activeElement).toBe(profilePanel?.querySelector("summary"));
 
     await user.click(
       screen.getByRole("button", { name: "Download encounter log" }),
@@ -336,16 +348,57 @@ describe("browser-oriented D08-D09 workflow", () => {
     expect(download).toHaveBeenCalledWith(expect.anything(), "encounter-log", {
       combatantInfo: built,
     });
-    expect(
-      await screen.findByText(
-        /metadata came from the pasted SimulationCraft profile/u,
-      ),
-    ).toBeTruthy();
+    expect(await screen.findByText("Encounter log downloaded.")).toBeTruthy();
+    expect(screen.queryByText(/V22 adapter/u)).toBeNull();
+    expect(screen.queryByText(/metadata came/u)).toBeNull();
 
+    await user.click(profileSummary);
+    expect(
+      screen.getByRole("button", { name: "Replace profile" }),
+    ).toBeTruthy();
     await user.type(profile, "discard this replacement");
     await user.click(screen.getByRole("button", { name: "Remove profile" }));
     expect(screen.queryByText(/Using Pølsefatter/u)).toBeNull();
+    expect(
+      screen.getByText("Required: paste your SimulationCraft addon output"),
+    ).toBeTruthy();
+    expect(profilePanel).toHaveProperty("open", true);
     expect((profile as HTMLTextAreaElement).value).toBe("");
+  });
+
+  it("keeps the character profile panel open when profile validation fails", async () => {
+    const user = userEvent.setup();
+    const client = new FakeAnalyzerClient();
+    render(
+      <App
+        createWorkerClient={() => client}
+        buildCharacterProfile={() =>
+          failure({
+            category: "invalid-combat-log",
+            code: "SIMC_PROFILE_MALFORMED",
+            message: "The pasted profile is incomplete.",
+            recoverable: true,
+            suggestedAction: "Paste the complete addon output.",
+          })
+        }
+      />,
+    );
+    await reachResult(user, client);
+
+    const profileSummary = screen.getByText("Character profile");
+    const profilePanel = profileSummary.closest("details");
+    await user.click(profileSummary);
+    await user.type(
+      screen.getByLabelText("SimulationCraft addon output"),
+      "incomplete simc output",
+    );
+    await user.click(screen.getByRole("button", { name: "Use profile" }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("The pasted profile is incomplete.");
+    expect(profilePanel).toHaveProperty("open", true);
+    expect(document.activeElement).toBe(alert);
+    expect(screen.queryByText(/Active profile/u)).toBeNull();
   });
 
   it("requires explicit choice when no unique recorder exists and shows every character", async () => {
